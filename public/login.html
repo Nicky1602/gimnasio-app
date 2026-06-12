@@ -268,6 +268,14 @@
         <div id="msg" class="msg"></div>
 
         <div class="form-group">
+    <label>Código del gimnasio</label>
+    <div class="input-container">
+        <span class="icon">🏋️</span>
+        <input type="text" id="codigo" placeholder="Ej: A1B2C3D4" autocomplete="off" style="text-transform:uppercase;">
+    </div>
+</div>
+
+        <div class="form-group">
             <label>Usuario</label>
             <div class="input-container">
                 <span class="icon">✉</span>
@@ -291,7 +299,9 @@
         <a onclick="abrirModalPassword()" class="forgot-password" style="cursor:pointer;">
             <span class="icon-shield">🛡️</span> ¿Olvidaste tu contraseña?
         </a>
-
+<div style="color:#9ca3af;font-size:13px;margin-bottom:16px;">
+    ¿No tienes cuenta? <a href="/registro.html" style="color:#ffc131;text-decoration:none;">Registra tu gimnasio</a>
+</div>
         <div class="footer-text">
             © 2026 Gym. Todos los derechos reservados.
         </div>
@@ -299,36 +309,29 @@
 
     <script>
         async function login() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const msg = document.getElementById('msg');
-            
-            if (!username || !password) { 
-                msg.className = 'msg err'; 
-                msg.textContent = 'Completa todos los campos.'; 
-                return; 
-            }
-            
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok) {
-                    window.location.href = '/index.html';
-                } else { 
-                    msg.className = 'msg err'; 
-                    msg.textContent = '❌ ' + (data.error || 'Error al iniciar sesión'); 
-                }
-            } catch (error) {
-                msg.className = 'msg err';
-                msg.textContent = '❌ No se pudo conectar con el servidor.';
-            }
-        }
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const codigo = document.getElementById('codigo').value.trim().toUpperCase();
+    const msg = document.getElementById('msg');
+    if (!username || !password || !codigo) { 
+        msg.className = 'msg err'; 
+        msg.textContent = 'Completa todos los campos.'; 
+        return; 
+    }
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, codigo })
+        });
+        const data = await res.json();
+        if (res.ok) window.location.href = '/index.html';
+        else { msg.className = 'msg err'; msg.textContent = '❌ ' + (data.error || 'Error al iniciar sesión'); }
+    } catch (error) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ No se pudo conectar con el servidor.';
+    }
+}
 
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
