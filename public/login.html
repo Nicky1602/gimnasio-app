@@ -1,0 +1,341 @@
+<<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym - Gestión de Usuarios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('fondo.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(23, 25, 30, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            color: #ffc131;
+            margin-bottom: 10px;
+        }
+
+        .login-card h1 {
+            color: #ffffff;
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .login-card .subtitle {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        .login-card .instruction {
+            color: #6b7280;
+            font-size: 15px;
+            margin-bottom: 35px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-container .icon {
+            position: absolute;
+            left: 16px;
+            color: #4b5563;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-container .toggle-password {
+            position: absolute;
+            right: 16px;
+            color: #4b5563;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .input-container input {
+            width: 100%;
+            background: rgba(17, 19, 23, 0.6);
+            border: 1px solid #2d3139;
+            border-radius: 8px;
+            padding: 14px 16px 14px 44px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-container input[type="password"] {
+            padding-right: 44px;
+        }
+
+        .input-container input::placeholder {
+            color: #4b5563;
+        }
+
+        .input-container input:focus {
+            border-color: #ffc131;
+            background: rgba(17, 19, 23, 0.9);
+            box-shadow: 0 0 0 3px rgba(255, 193, 49, 0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #f5b932;
+            color: #111317;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: #e0a726;
+            transform: translateY(-1px);
+        }
+
+        .msg {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+            text-align: left;
+        }
+
+        .msg.err {
+            background: #ffeef1;
+            color: #e94560;
+            display: block;
+            border-left: 4px solid #e94560;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #4b5563;
+            font-size: 13px;
+            margin: 25px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #2d3139;
+        }
+
+        .divider:not(:empty)::before { margin-right: .75em; }
+        .divider:not(:empty)::after { margin-left: .75em; }
+
+        .forgot-password {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+            margin-bottom: 40px;
+        }
+
+        .forgot-password:hover { color: #ffc131; }
+        .forgot-password .icon-shield { color: #ffc131; font-size: 16px; }
+        .footer-text { color: #4b5563; font-size: 11px; letter-spacing: 0.3px; }
+    </style>
+</head>
+<!-- Modal cambiar contraseña -->
+<div id="modalPassword" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
+    <div style="background:rgba(23,25,30,0.95);border:1px solid #2d3139;border-radius:20px;padding:36px;width:100%;max-width:420px;backdrop-filter:blur(12px);">
+        <h3 style="color:#ffc131;margin-bottom:6px;">🔑 Cambiar contraseña</h3>
+        <p style="color:#9ca3af;font-size:13px;margin-bottom:20px;">Ingresa tu usuario y contraseña actual para crear una nueva.</p>
+        <div id="msgModal" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;border-left:4px solid;"></div>
+        <input type="text" id="mpUsuario" placeholder="Usuario" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;">
+        <input type="password" id="mpActual" placeholder="Contraseña actual" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;">
+        <input type="password" id="mpNueva" placeholder="Nueva contraseña" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:20px;">
+        <div style="display:flex;gap:10px;">
+            <button onclick="cambiarPassword()" style="flex:1;background:#f5b932;color:#111;border:none;padding:13px;border-radius:8px;cursor:pointer;font-weight:600;">Cambiar</button>
+            <button onclick="cerrarModalPassword()" style="flex:1;background:#2d3139;color:#eee;border:none;padding:13px;border-radius:8px;cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalPassword() {
+        document.getElementById('modalPassword').style.display = 'flex';
+    }
+    function cerrarModalPassword() {
+        document.getElementById('modalPassword').style.display = 'none';
+        document.getElementById('mpUsuario').value = '';
+        document.getElementById('mpActual').value = '';
+        document.getElementById('mpNueva').value = '';
+        document.getElementById('msgModal').style.display = 'none';
+    }
+    async function cambiarPassword() {
+        const username = document.getElementById('mpUsuario').value.trim();
+        const passwordActual = document.getElementById('mpActual').value.trim();
+        const passwordNueva = document.getElementById('mpNueva').value.trim();
+        const msg = document.getElementById('msgModal');
+        if (!username || !passwordActual || !passwordNueva) {
+            msg.style.display = 'block'; msg.style.background = '#4a1a1a'; msg.style.color = '#e94560'; msg.style.borderColor = '#e94560';
+            msg.textContent = 'Completa todos los campos.'; return;
+        }
+        const res = await fetch('/api/cambiar-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, passwordActual, passwordNueva })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            msg.style.display = 'block'; msg.style.background = '#1a4a2e'; msg.style.color = '#4caf50'; msg.style.borderColor = '#4caf50';
+            msg.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
+            setTimeout(cerrarModalPassword, 2000);
+        } else {
+            msg.style.display = 'block'; msg.style.background = '#4a1a1a'; msg.style.color = '#e94560'; msg.style.borderColor = '#e94560';
+            msg.textContent = '❌ ' + data.error;
+        }
+    }
+</script>
+</body>
+</html>
+<body>
+
+    <div class="login-card">
+        <div class="brand-logo">❚█══█❚</div>
+        <h1>Gym</h1>
+        <div class="subtitle">Gestión de Usuarios</div>
+        <div class="instruction">Inicia sesión para continuar</div>
+
+        <div id="msg" class="msg"></div>
+
+        <div class="form-group">
+            <label>Usuario</label>
+            <div class="input-container">
+                <span class="icon">✉</span>
+                <input type="text" id="username" placeholder="admin">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Contraseña</label>
+            <div class="input-container">
+                <span class="icon">🔒</span>
+                <input type="password" id="password" placeholder="••••••••">
+                <span class="toggle-password" onclick="togglePasswordVisibility()">👁</span>
+            </div>
+        </div>
+
+        <button onclick="login()" class="btn-submit">Iniciar sesión</button>
+
+        <div class="divider">o</div>
+
+        <a onclick="abrirModalPassword()" class="forgot-password" style="cursor:pointer;">
+            <span class="icon-shield">🛡️</span> ¿Olvidaste tu contraseña?
+        </a>
+
+        <div class="footer-text">
+            © 2026 Gym. Todos los derechos reservados.
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const msg = document.getElementById('msg');
+            
+            if (!username || !password) { 
+                msg.className = 'msg err'; 
+                msg.textContent = 'Completa todos los campos.'; 
+                return; 
+            }
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    window.location.href = '/index.html';
+                } else { 
+                    msg.className = 'msg err'; 
+                    msg.textContent = '❌ ' + (data.error || 'Error al iniciar sesión'); 
+                }
+            } catch (error) {
+                msg.className = 'msg err';
+                msg.textContent = '❌ No se pudo conectar con el servidor.';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+        }
+
+        document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membresías - GymManager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #1a1a2e; min-height: 100vh; padding: 24px 0; display: flex; flex-direction: column; }
+        .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid #ffffff15; }
+        .sidebar-logo h1 { color: #e94560; font-size: 20px; }
+        .sidebar-logo p { color: #aaa; font-size: 12px; margin-top: 4px; }
+        .sidebar-menu { padding: 24px 0; flex: 1; }
+        .menu-item { padding: 12px 24px; color: #aaa; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all .2s; text-decoration: none; }
+        .menu-item:hover, .menu-item.active { background: #e9456015; color: #e94560; border-left: 3px solid #e94560; }
+        .menu-item span { font-size: 18px; }
+        .sidebar-footer { padding: 16px 24px; border-top: 1px solid #ffffff15; }
+        .sidebar-footer button { width: 100%; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .sidebar-footer button:hover { background: #e94560; color: white; }
+        .main { flex: 1; padding: 32px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .topbar h2 { font-size: 22px; color: #1a1a2e; }
+        .topbar p { color: #888; font-size: 13px; margin-top: 2px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-header h3 { font-size: 16px; color: #1a1a2e; font-weight: 600; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; font-weight: 500; }
+        .form-group input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: #e94560; }
+        .btn-primary { background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; }
+        .btn-primary:hover { background: #c73652; }
+        .btn-edit { background: #fff3e0; color: #f0a500; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .btn-delete { background: #ffeef1; color: #e94560; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-left: 6px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 12px 16px; text-align: left; font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
+        td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #f9f9f9; }
+        tr:hover td { background: #fafafa; }
+        .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: none; }
+        .msg.ok { background: #eefff5; color: #27ae60; display: block; }
+        .msg.err { background: #ffeef1; color: #e94560; display: block; }
+        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+        .modal-bg.active { display: flex; }
+        .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 440px; }
+        .modal h3 { font-size: 18px; margin-bottom: 20px; color: #1a1a2e; }
+        .modal input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 14px; margin-bottom: 12px; outline: none; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+        .btn-secondary { background: #f5f5f5; color: #555; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .precio { color: #27ae60; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <h1>💪 GymManager</h1>
+            <p>Panel de administración</p>
+        </div>
+        <div class="sidebar-menu">
+            <a href="/index.html" class="menu-item"><span>👥</span> Socios</a>
+            <a href="/membresias.html" class="menu-item active"><span>💳</span> Membresías</a>
+            <a href="/pagos.html" class="menu-item"><span>💰</span> Pagos</a>
+            <a href="/reportes.html" class="menu-item"><span>📊</span> Reportes</a>
+        </div>
+        <div class="sidebar-footer">
+            <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div>
+                <h2>Gestión de Membresías</h2>
+                <p>Administra los planes del gimnasio</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>➕ Nueva membresía</h3></div>
+            <div id="msg" class="msg"></div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombre del plan</label>
+                    <input type="text" id="nombre" placeholder="Ej: Mensual">
+                </div>
+                <div class="form-group">
+                    <label>Precio (S/.)</label>
+                    <input type="number" id="precio" placeholder="30.00">
+                </div>
+                <div class="form-group">
+                    <label>Duración (días)</label>
+                    <input type="number" id="dias" placeholder="30">
+                </div>
+                <button class="btn-primary" onclick="agregarMembresia()">Agregar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>💳 Planes disponibles</h3>
+                <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">0 planes</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Plan</th><th>Precio</th><th>Duración</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="tabla"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-bg" id="modalBg">
+        <div class="modal">
+            <h3>✏️ Editar Membresía</h3>
+            <input type="hidden" id="editId">
+            <input type="text" id="editNombre" placeholder="Nombre del plan">
+            <input type="number" id="editPrecio" placeholder="Precio">
+            <input type="number" id="editDias" placeholder="Duración en días">
+            <div class="modal-btns">
+                <button class="btn-primary" onclick="guardarEdicion()">Guardar</button>
+                <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function verificarSesion() {
+            const res = await fetch('/api/sesion');
+            if (!res.ok) window.location.href = '/login.html';
+        }
+
+        async function cerrarSesion() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+
+        async function cargarMembresias() {
+            const res = await fetch('/api/membresias');
+            if (!res.ok) { window.location.href = '/login.html'; return; }
+            const data = await res.json();
+            document.getElementById('totalBadge').textContent = data.length + ' planes';
+            document.getElementById('tabla').innerHTML = data.map(m => `
+                <tr>
+                    <td><strong>${m.nombre}</strong></td>
+                    <td class="precio">S/.${parseFloat(m.precio).toFixed(2)}</td>
+                    <td>${m.duracion_dias} días</td>
+                    <td>
+                        <button class="btn-edit" onclick="abrirEditar(${m.id},'${m.nombre}',${m.precio},${m.duracion_dias})">✏️ Editar</button>
+                        <button class="btn-delete" onclick="eliminar(${m.id})">🗑️ Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function agregarMembresia() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const precio = document.getElementById('precio').value;
+            const dias = document.getElementById('dias').value;
+            const msg = document.getElementById('msg');
+            if (!nombre || !precio || !dias) { msg.className = 'msg err'; msg.textContent = 'Completa todos los campos.'; return; }
+            const res = await fetch('/api/membresias', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, precio, duracion_dias: dias })
+            });
+            if (res.ok) {
+                msg.className = 'msg ok'; msg.textContent = '✅ Membresía creada.';
+                document.getElementById('nombre').value = '';
+                document.getElementById('precio').value = '';
+                document.getElementById('dias').value = '';
+                cargarMembresias();
+            } else { const d = await res.json(); msg.className = 'msg err'; msg.textContent = '❌ ' + d.error; }
+        }
+
+        function abrirEditar(id, nombre, precio, dias) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editPrecio').value = precio;
+            document.getElementById('editDias').value = dias;
+            document.getElementById('modalBg').classList.add('active');
+        }
+
+        function cerrarModal() { document.getElementById('modalBg').classList.remove('active'); }
+
+        async function guardarEdicion() {
+            const id = document.getElementById('editId').value;
+            const nombre = document.getElementById('editNombre').value.trim();
+            const precio = document.getElementById('editPrecio').value;
+            const dias = document.getElementById('editDias').value;
+            await fetch(`/api/membresias/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, precio, duracion_dias: dias })
+            });
+            cerrarModal(); cargarMembresias();
+        }
+
+        async function eliminar(id) {
+            if (!confirm('¿Eliminar esta membresía?')) return;
+            await fetch(`/api/membresias/${id}`, { method: 'DELETE' });
+            cargarMembresias();
+        }
+
+        verificarSesion();
+        cargarMembresias();
+    </script>
+</body>
+</html>
