@@ -173,9 +173,10 @@ app.delete('/api/socios/:id', auth, async (req, res) => {
 });
 
 // MEMBRESÍAS
+// MEMBRESÍAS
 app.get('/api/membresias', auth, async (req, res) => {
     try {
-        const r = await pool.query('SELECT * FROM Membresias WHERE gimnasio_id=$1', [req.session.gimnasio_id]);
+        const r = await pool.query('SELECT * FROM Membresias WHERE gimnasio_id=$1 ORDER BY id', [req.session.gimnasio_id]);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -183,7 +184,7 @@ app.get('/api/membresias', auth, async (req, res) => {
 app.post('/api/membresias', auth, async (req, res) => {
     const { nombre, precio, duracion_dias } = req.body;
     try {
-        await pool.query('INSERT INTO Membresias (nombre, precio, duracion_dias, gimnasio_id) VALUES ($1,$2,$3,$4)',
+        await pool.query('INSERT INTO Membresias (nombre, precio, duracion_dias, gimnasio_id, activo) VALUES ($1,$2,$3,$4,true)',
             [nombre, precio, duracion_dias, req.session.gimnasio_id]);
         res.json({ mensaje: 'Membresía creada' });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -198,8 +199,20 @@ app.put('/api/membresias/:id', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Activar/desactivar membresía
+app.patch('/api/membresias/:id/toggle', auth, async (req, res) => {
+    try {
+        const r = await pool.query('SELECT activo FROM Membresias WHERE id=$1 AND gimnasio_id=$2', [req.params.id, req.session.gimnasio_id]);
+        const nuevoEstado = !r.rows[0].activo;
+        await pool.query('UPDATE Membresias SET activo=$1 WHERE id=$2 AND gimnasio_id=$3', [nuevoEstado, req.params.id, req.session.gimnasio_id]);
+        res.json({ mensaje: nuevoEstado ? 'Membresía activada' : 'Membresía desactivada', activo: nuevoEstado });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/membresias/:id', auth, async (req, res) => {
     try {
+        const pagos = await pool.query('SELECT COUNT(*) as total FROM Pagos WHERE membresia_id=$1', [req.params.id]);
+        if (parseInt(pagos.rows[0].total) > 0) return res.status(400).json({ error: 'No se puede eliminar porque tiene pagos asociados. Desactívala en su lugar.' });
         await pool.query('DELETE FROM Membresias WHERE id=$1 AND gimnasio_id=$2', [req.params.id, req.session.gimnasio_id]);
         res.json({ mensaje: 'Membresía eliminada' });
     } catch (e) { res.status(500).json({ error: e.message }); }

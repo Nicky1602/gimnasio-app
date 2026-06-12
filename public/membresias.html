@@ -19,7 +19,7 @@
         .sidebar-footer button { width: 100%; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; }
         .sidebar-footer button:hover { background: #e94560; color: white; }
         .main { flex: 1; padding: 32px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .topbar { margin-bottom: 32px; }
         .topbar h2 { font-size: 22px; color: #1a1a2e; }
         .topbar p { color: #888; font-size: 13px; margin-top: 2px; }
         .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
@@ -33,10 +33,13 @@
         .btn-primary:hover { background: #c73652; }
         .btn-edit { background: #fff3e0; color: #f0a500; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
         .btn-delete { background: #ffeef1; color: #e94560; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-left: 6px; }
+        .btn-toggle-on { background: #eefff5; color: #27ae60; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-left: 6px; }
+        .btn-toggle-off { background: #f5f5f5; color: #888; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-left: 6px; }
         table { width: 100%; border-collapse: collapse; }
         th { padding: 12px 16px; text-align: left; font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
         td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #f9f9f9; }
         tr:hover td { background: #fafafa; }
+        tr.inactiva td { opacity: 0.5; }
         .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: none; }
         .msg.ok { background: #eefff5; color: #27ae60; display: block; }
         .msg.err { background: #ffeef1; color: #e94560; display: block; }
@@ -48,6 +51,8 @@
         .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
         .btn-secondary { background: #f5f5f5; color: #555; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
         .precio { color: #27ae60; font-weight: 600; }
+        .badge-activa { background: #eefff5; color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-inactiva { background: #f5f5f5; color: #888; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -70,10 +75,8 @@
 
     <div class="main">
         <div class="topbar">
-            <div>
-                <h2>Gestión de Membresías</h2>
-                <p>Administra los planes del gimnasio</p>
-            </div>
+            <h2>Gestión de Membresías</h2>
+            <p>Administra los planes del gimnasio</p>
         </div>
 
         <div class="card">
@@ -82,7 +85,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>Nombre del plan</label>
-                    <input type="text" id="nombre" placeholder="Ej: Mensual">
+                    <input type="text" id="nombre" placeholder="Ej: Promoción Verano">
                 </div>
                 <div class="form-group">
                     <label>Precio (S/.)</label>
@@ -103,7 +106,7 @@
             </div>
             <table>
                 <thead>
-                    <tr><th>Plan</th><th>Precio</th><th>Duración</th><th>Acciones</th></tr>
+                    <tr><th>Plan</th><th>Precio</th><th>Duración</th><th>Estado</th><th>Acciones</th></tr>
                 </thead>
                 <tbody id="tabla"></tbody>
             </table>
@@ -141,12 +144,14 @@
             const data = await res.json();
             document.getElementById('totalBadge').textContent = data.length + ' planes';
             document.getElementById('tabla').innerHTML = data.map(m => `
-                <tr>
+                <tr class="${m.activo ? '' : 'inactiva'}">
                     <td><strong>${m.nombre}</strong></td>
-                    <td class="precio">S/.${parseFloat(m.precio).toFixed(2)}</td>
+                    <td class="precio">S/. ${parseFloat(m.precio).toFixed(2)}</td>
                     <td>${m.duracion_dias} días</td>
+                    <td><span class="${m.activo ? 'badge-activa' : 'badge-inactiva'}">${m.activo ? '✅ Activa' : '⏸️ Inactiva'}</span></td>
                     <td>
                         <button class="btn-edit" onclick="abrirEditar(${m.id},'${m.nombre}',${m.precio},${m.duracion_dias})">✏️ Editar</button>
+                        <button class="${m.activo ? 'btn-toggle-off' : 'btn-toggle-on'}" onclick="toggleMembresia(${m.id})">${m.activo ? '⏸️ Desactivar' : '▶️ Activar'}</button>
                         <button class="btn-delete" onclick="eliminar(${m.id})">🗑️ Eliminar</button>
                     </td>
                 </tr>
@@ -170,6 +175,13 @@
                 document.getElementById('dias').value = '';
                 cargarMembresias();
             } else { const d = await res.json(); msg.className = 'msg err'; msg.textContent = '❌ ' + d.error; }
+        }
+
+        async function toggleMembresia(id) {
+            const res = await fetch(`/api/membresias/${id}/toggle`, { method: 'PATCH' });
+            const data = await res.json();
+            if (res.ok) cargarMembresias();
+            else alert('❌ ' + data.error);
         }
 
         function abrirEditar(id, nombre, precio, dias) {
@@ -196,8 +208,10 @@
 
         async function eliminar(id) {
             if (!confirm('¿Eliminar esta membresía?')) return;
-            await fetch(`/api/membresias/${id}`, { method: 'DELETE' });
-            cargarMembresias();
+            const res = await fetch(`/api/membresias/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok) cargarMembresias();
+            else alert('❌ ' + data.error);
         }
 
         verificarSesion();
