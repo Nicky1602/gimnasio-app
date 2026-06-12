@@ -16,7 +16,6 @@
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "mssql": "^12.5.5",
     "pdfkit": "^0.19.1",
     "pg": "^8.21.0"
   }
