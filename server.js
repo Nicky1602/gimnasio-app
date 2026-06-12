@@ -6,8 +6,7 @@ const PDFDocument = require('pdfkit');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY || 're_NsBmNocc_Lq7c9qrbKqrY6vY9o9qXNJKQ');
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 const app = express();
 app.use(require('cors')());
 app.use(express.json());
