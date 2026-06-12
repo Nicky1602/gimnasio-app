@@ -53,7 +53,6 @@
         .vencido { background: #ffeef1; color: #e94560; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .vigente { background: #eefff5; color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .precio { color: #27ae60; font-weight: 600; }
-        /* Modal */
         .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal-bg.active { display: flex; }
         .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
@@ -154,21 +153,15 @@
                 <button class="btn-primary" onclick="registrarPago()">Registrar</button>
             </div>
         </div>
-<div class="card">
-    <div class="card-header">
-        <h3>📋 Pagos de hoy</h3>
-        <a href="/api/exportar/pagos/excel" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none;">📊 Exportar Excel</a>
-    </div>
-    <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:16px;">0 pagos</span>
-    <table>
-        <thead>
-            <tr><th>Socio</th><th>Membresía</th><th>Monto</th><th>Método</th><th>Vencimiento</th><th>Estado</th></tr>
-        </thead>
-        <tbody id="tabla"></tbody>
-    </table>
-</div>
-       
-</div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>📋 Pagos de hoy</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">0 pagos</span>
+                    <a href="/api/exportar/pagos/excel" style="background:#27ae60;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">📊 Exportar Excel</a>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr><th>Socio</th><th>Membresía</th><th>Monto</th><th>Método</th><th>Vencimiento</th><th>Estado</th></tr>
@@ -239,15 +232,11 @@
             const opt = select.options[select.selectedIndex];
             if (!opt) return;
             document.getElementById('monto').value = opt.dataset.precio;
-            
             const fecha = new Date();
             fecha.setDate(fecha.getDate() + parseInt(opt.dataset.dias));
-            
-            // Extraer componentes locales exactos
             const yyyy = fecha.getFullYear();
             const mm = String(fecha.getMonth() + 1).padStart(2, '0');
             const dd = String(fecha.getDate()).padStart(2, '0');
-            
             document.getElementById('fecha_vencimiento').value = `${yyyy}-${mm}-${dd}`;
         }
 
@@ -255,43 +244,25 @@
             const res = await fetch('/api/caja/resumen');
             if (!res.ok) return;
             const data = await res.json();
-            
             document.getElementById('statEfectivo').textContent = `S/. ${parseFloat(data.efectivo).toFixed(2)}`;
             document.getElementById('statTransferencia').textContent = `S/. ${parseFloat(data.transferencia).toFixed(2)}`;
             document.getElementById('statTotal').textContent = `S/. ${parseFloat(data.total).toFixed(2)}`;
             document.getElementById('totalBadge').textContent = data.pagosHoy.length + ' pagos';
-            
-            // Obtener la fecha de hoy limpia (sin horas) para comparar justamente los días
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
-
             document.getElementById('tabla').innerHTML = data.pagosHoy.map(p => {
-                // Buscamos la propiedad mapeando cualquier variante de mayúsculas/minúsculas que devuelva SQL Server
-                const fechaRaw = p.fecha_vencimiento || p.Fecha_Vencimiento;
-                let fechaVence = null;
                 let fechaFormateada = '-';
                 let estadoClass = 'vencido';
                 let estadoTexto = 'Vencido';
-
-                if (fechaRaw) {
-                    // Forzar el corte para quedarnos solo con 'YYYY-MM-DD' y evitar desfase horario de Javascript
-                    const stringFecha = fechaRaw.split('T')[0];
-                    const [anio, mes, dia] = stringFecha.split('-');
-                    
-                    // Creamos la fecha usando componentes locales exactos
-                    fechaVence = new Date(anio, mes - 1, dia);
+                if (p.fecha_vencimiento) {
+                    const [anio, mes, dia] = p.fecha_vencimiento.split('T')[0].split('-');
+                    const fechaVence = new Date(anio, mes - 1, dia);
                     fechaFormateada = `${dia}/${mes}/${anio}`;
-
-                    // Validar si está vigente o vencido comparando fechas puras
-                    if (fechaVence >= hoy) {
-                        estadoClass = 'vigente';
-                        estadoTexto = 'Vigente';
-                    }
+                    if (fechaVence >= hoy) { estadoClass = 'vigente'; estadoTexto = 'Vigente'; }
                 }
-
                 return `<tr>
-                    <td><strong>${p.socio || p.Socio}</strong></td>
-                    <td>${p.membresia || p.Membresia}</td>
+                    <td><strong>${p.socio}</strong></td>
+                    <td>${p.membresia}</td>
                     <td class="precio">S/. ${parseFloat(p.monto).toFixed(2)}</td>
                     <td><span class="${p.metodo_pago === 'Efectivo' ? 'badge-efectivo' : 'badge-transferencia'}">${p.metodo_pago === 'Efectivo' ? '💵' : '📲'} ${p.metodo_pago}</span></td>
                     <td>${fechaFormateada}</td>
@@ -301,30 +272,23 @@
         }
 
         async function cargarHistorial() {
-        const res = await fetch('/api/caja/historial');
-        const data = await res.json();
-        
-        if (data.length === 0) {
-            document.getElementById('historial').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px;">No hay cierres registrados aún</p>';
-            return;
-        }
-        
-        document.getElementById('historial').innerHTML = data.map(c => {
-            // Al recibir el texto limpio de SQL, la hora se muestra exacta sin restar las 5 horas
-            const fechaExacta = new Date(c.fecha_cierre_str);
-            
-            return `
-            <div class="historial-item">
-                <div>
-                    <div style="font-weight:600;font-size:14px;">📅 ${fechaExacta.toLocaleDateString('es-ES', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-                    <div style="font-size:12px;color:#888;margin-top:4px;">💵 Efectivo: S/. ${parseFloat(c.total_efectivo).toFixed(2)} &nbsp;|&nbsp; 📲 Transferencia: S/. ${parseFloat(c.total_transferencia).toFixed(2)}</div>
-                    ${c.observaciones ? `<div style="font-size:12px;color:#aaa;margin-top:2px;">📝 ${c.observaciones}</div>` : ''}
+            const res = await fetch('/api/caja/historial');
+            const data = await res.json();
+            if (data.length === 0) {
+                document.getElementById('historial').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px;">No hay cierres registrados aún</p>';
+                return;
+            }
+            document.getElementById('historial').innerHTML = data.map(c => `
+                <div class="historial-item">
+                    <div>
+                        <div style="font-weight:600;font-size:14px;">📅 ${new Date(c.fecha_cierre).toLocaleDateString('es-ES', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+                        <div style="font-size:12px;color:#888;margin-top:4px;">💵 Efectivo: S/. ${parseFloat(c.total_efectivo).toFixed(2)} &nbsp;|&nbsp; 📲 Transferencia: S/. ${parseFloat(c.total_transferencia).toFixed(2)}</div>
+                        ${c.observaciones ? `<div style="font-size:12px;color:#aaa;margin-top:2px;">📝 ${c.observaciones}</div>` : ''}
+                    </div>
+                    <div style="font-size:20px;font-weight:700;color:#e94560;">S/. ${parseFloat(c.total_general).toFixed(2)}</div>
                 </div>
-                <div style="font-size:20px;font-weight:700;color:#e94560;">S/. ${parseFloat(c.total_general).toFixed(2)}</div>
-            </div>
-            `;
-        }).join('');
-    }
+            `).join('');
+        }
 
         async function registrarPago() {
             const socio_id = document.getElementById('socio_id').value;
@@ -333,25 +297,17 @@
             const metodo_pago = document.getElementById('metodo_pago').value;
             const fecha_vencimiento = document.getElementById('fecha_vencimiento').value;
             const msg = document.getElementById('msg');
-            
             if (!socio_id || !membresia_id || !monto || !fecha_vencimiento) {
                 msg.className = 'msg err'; msg.textContent = 'Completa todos los campos.'; return;
             }
-            
             const res = await fetch('/api/pagos', {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago })
             });
-            
             if (res.ok) {
                 msg.className = 'msg ok'; msg.textContent = '✅ Pago registrado correctamente.';
                 cargarResumen();
-            } else { 
-                const d = await res.json(); 
-                msg.className = 'msg err'; 
-                msg.textContent = '❌ ' + d.error; 
-            }
+            } else { const d = await res.json(); msg.className = 'msg err'; msg.textContent = '❌ ' + d.error; }
         }
 
         async function abrirCierre() {
@@ -372,8 +328,7 @@
         async function confirmarCierre() {
             const observaciones = document.getElementById('observaciones').value;
             const res = await fetch('/api/caja/cierre', {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ observaciones })
             });
             if (res.ok) {
@@ -383,11 +338,10 @@
             }
         }
 
-        // Inicialización del flujo
         verificarSesion();
         cargarSelects();
         cargarResumen();
         cargarHistorial();
     </script>
 </body>
-</html
+</html>
