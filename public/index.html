@@ -20,6 +20,9 @@
         .sidebar-footer { padding: 16px 24px; border-top: 1px solid #ffffff15; }
         .sidebar-footer button { width: 100%; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; }
         .sidebar-footer button:hover { background: #e94560; color: white; }
+        .badge-activo { background: #eefff5; color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-vencido { background: #ffeef1; color: #e94560; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-sin { background: #f5f5f5; color: #888; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 
         /* Main */
         .main { flex: 1; padding: 32px; overflow-y: auto; }
@@ -168,14 +171,15 @@
     </div>
     <table>
         <thead>
-            <tr>
-                <th>Socio</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>Registro</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
+           <tr>
+    <th>Socio</th>
+    <th>Email</th>
+    <th>Teléfono</th>
+    <th>Registro</th>
+    <th>Vencimiento</th>
+    <th>Estado</th>
+    <th>Acciones</th>
+</tr>
         </thead>
         <tbody id="tabla"></tbody>
     </table>
@@ -221,20 +225,23 @@
             document.getElementById('statHoy').textContent = registradosHoy;
             document.getElementById('statActivos').textContent = socios.length;
             document.getElementById('totalBadge').textContent = socios.length + ' socios';
-            document.getElementById('tabla').innerHTML = socios.map(s => {
-                const inicial = s.nombre.charAt(0).toUpperCase();
-                return `<tr>
-                    <td><span class="avatar">${inicial}</span>${s.nombre}</td>
-                    <td>${s.email}</td>
-                    <td>${s.telefono || '-'}</td>
-                    <td>${new Date(s.fecha_registro).toLocaleDateString('es-ES')}</td>
-                    <td><span class="badge">Activo</span></td>
-                    <td>
-                        <button class="btn-edit" onclick="abrirEditar(${s.id},'${s.nombre}','${s.email}','${s.telefono||''}')">✏️ Editar</button>
-                        <button class="btn-delete" onclick="eliminarSocio(${s.id})">🗑️ Eliminar</button>
-                    </td>
-                </tr>`;
-            }).join('');
+         document.getElementById('tabla').innerHTML = socios.map(s => {
+    const inicial = s.nombre.charAt(0).toUpperCase();
+    const estadoClass = s.estado_membresia === 'Activo' ? 'badge-activo' : s.estado_membresia === 'Vencido' ? 'badge-vencido' : 'badge-sin';
+    const vence = s.fecha_vencimiento ? new Date(s.fecha_vencimiento).toLocaleDateString('es-ES') : '-';
+    return `<tr>
+        <td><span class="avatar">${inicial}</span>${s.nombre}</td>
+        <td>${s.email}</td>
+        <td>${s.telefono || '-'}</td>
+        <td>${new Date(s.fecha_registro).toLocaleDateString('es-ES')}</td>
+        <td>${vence}</td>
+        <td><span class="${estadoClass}">${s.estado_membresia}</span></td>
+        <td>
+            <button class="btn-edit" onclick="abrirEditar(${s.id},'${s.nombre}','${s.email}','${s.telefono||''}')">✏️ Editar</button>
+            <button class="btn-delete" onclick="eliminarSocio(${s.id})">🗑️ Eliminar</button>
+        </td>
+    </tr>`;
+}).join('');
         }
 
         async function agregarSocio() {

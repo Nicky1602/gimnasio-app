@@ -126,7 +126,23 @@ app.post('/api/cambiar-password', async (req, res) => {
 // SOCIOS
 app.get('/api/socios', auth, async (req, res) => {
     try {
-        const r = await pool.query('SELECT * FROM Socios WHERE gimnasio_id=$1 ORDER BY fecha_registro DESC', [req.session.gimnasio_id]);
+        const r = await pool.query(`
+            SELECT s.*,
+                p.fecha_vencimiento,
+                CASE 
+                    WHEN p.fecha_vencimiento IS NULL THEN 'Sin membresía'
+                    WHEN p.fecha_vencimiento >= CURRENT_DATE THEN 'Activo'
+                    ELSE 'Vencido'
+                END as estado_membresia
+            FROM Socios s
+            LEFT JOIN (
+                SELECT DISTINCT ON (socio_id) socio_id, fecha_vencimiento
+                FROM Pagos
+                ORDER BY socio_id, fecha_pago DESC
+            ) p ON s.id = p.socio_id
+            WHERE s.gimnasio_id=$1
+            ORDER BY s.fecha_registro DESC
+        `, [req.session.gimnasio_id]);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
