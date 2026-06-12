@@ -83,7 +83,10 @@ function auth(req, res, next) {
     if (req.session.usuario) return next();
     res.status(401).json({ error: 'No autorizado' });
 }
-
+function isAdmin(req, res, next) {
+    if (req.session.rol === 'admin') return next();
+    res.status(403).json({ error: 'No tienes permisos para realizar esta acción' });
+}
 // LOGIN
 app.post('/api/login', async (req, res) => {
     const { username, password, codigo } = req.body;
@@ -97,7 +100,8 @@ app.post('/api/login', async (req, res) => {
         req.session.usuario = r.rows[0].username;
         req.session.gimnasio_id = gym.rows[0].id;
         req.session.gimnasio_nombre = gym.rows[0].nombre;
-        res.json({ mensaje: 'Login exitoso', usuario: r.rows[0].username, gimnasio: gym.rows[0].nombre });
+        req.session.rol = r.rows[0].rol;
+        res.json({ mensaje: 'Login exitoso', usuario: r.rows[0].username, gimnasio: gym.rows[0].nombre, rol: r.rows[0].rol });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -107,7 +111,7 @@ app.post('/api/logout', (req, res) => {
 });
 
 app.get('/api/sesion', (req, res) => {
-    if (req.session.usuario) res.json({ usuario: req.session.usuario });
+    if (req.session.usuario) res.json({ usuario: req.session.usuario, rol: req.session.rol });
     else res.status(401).json({ error: 'No autenticado' });
 });
 
@@ -173,7 +177,7 @@ app.delete('/api/socios/:id', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// MEMBRESÍAS
+
 // MEMBRESÍAS
 app.get('/api/membresias', auth, async (req, res) => {
     try {
@@ -191,7 +195,7 @@ app.post('/api/membresias', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/membresias/:id', auth, async (req, res) => {
+app.put('/api/membresias/:id', auth, isAdmin, async (req, res) => {
     const { nombre, precio, duracion_dias } = req.body;
     try {
         await pool.query('UPDATE Membresias SET nombre=$1, precio=$2, duracion_dias=$3 WHERE id=$4 AND gimnasio_id=$5',
@@ -201,7 +205,7 @@ app.put('/api/membresias/:id', auth, async (req, res) => {
 });
 
 // Activar/desactivar membresía
-app.patch('/api/membresias/:id/toggle', auth, async (req, res) => {
+app.patch('/api/membresias/:id/toggle', auth, isAdmin, async (req, res) => {
     try {
         const r = await pool.query('SELECT activo FROM Membresias WHERE id=$1 AND gimnasio_id=$2', [req.params.id, req.session.gimnasio_id]);
         const nuevoEstado = !r.rows[0].activo;
@@ -210,7 +214,7 @@ app.patch('/api/membresias/:id/toggle', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/membresias/:id', auth, async (req, res) => {
+app.delete('/api/membresias/:id', auth, isAdmin, async (req, res) => {
     try {
         const pagos = await pool.query('SELECT COUNT(*) as total FROM Pagos WHERE membresia_id=$1', [req.params.id]);
         if (parseInt(pagos.rows[0].total) > 0) return res.status(400).json({ error: 'No se puede eliminar porque tiene pagos asociados. Desactívala en su lugar.' });
@@ -449,7 +453,7 @@ app.get('/api/exportar/pagos/excel', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 // Registrar nuevo usuario
-app.post('/api/usuarios', auth, async (req, res) => {
+app.post('/api/usuarios', auth, isAdmin, async (req, res) => {
     const { username, password } = req.body;
     try {
         const existe = await pool.query('SELECT * FROM Usuarios WHERE username=$1', [username]);
@@ -461,7 +465,7 @@ app.post('/api/usuarios', auth, async (req, res) => {
 });
 
 // Listar usuarios
-app.get('/api/usuarios', auth, async (req, res) => {
+app.get('/api/usuarios', auth, isAdmin, async (req, res) => {
     try {
         const r = await pool.query('SELECT id, username FROM Usuarios ORDER BY id');
         res.json(r.rows);
@@ -469,7 +473,7 @@ app.get('/api/usuarios', auth, async (req, res) => {
 });
 
 // Eliminar usuario
-app.delete('/api/usuarios/:id', auth, async (req, res) => {
+app.delete('/api/usuarios/:id', auth, isAdmin, async (req, res) => {
     try {
         const r = await pool.query('SELECT username FROM Usuarios WHERE id=$1', [req.params.id]);
         if (r.rows[0]?.username === 'admin') return res.status(400).json({ error: 'No puedes eliminar al admin' });
