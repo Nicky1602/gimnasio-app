@@ -5,6 +5,8 @@ const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY || 're_NsBmNocc_Lq7c9qrbKqrY6vY9o9qXNJKQ');
 
 const app = express();
 app.use(require('cors')());
@@ -234,11 +236,47 @@ app.get('/api/pagos', auth, async (req, res) => {
 });
 
 app.post('/api/pagos', auth, async (req, res) => {
-    const { socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago } = req.body;
+    const { socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, enviar_comprobante } = req.body;
     try {
         await pool.query('INSERT INTO Pagos (socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, gimnasio_id) VALUES ($1,$2,$3,$4,$5,$6)',
             [socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, req.session.gimnasio_id]);
-        res.json({ mensaje: 'Pago registrado' });
+
+        if (enviar_comprobante) {
+            const socio = await pool.query('SELECT * FROM Socios WHERE id=$1', [socio_id]);
+            const membresia = await pool.query('SELECT * FROM Membresias WHERE id=$1', [membresia_id]);
+            const gym = await pool.query('SELECT * FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
+
+            if (socio.rows[0].email) {
+                await resend.emails.send({
+                    from: 'GymManager <onboarding@resend.dev>',
+                    to: socio.rows[0].email,
+                    subject: `Comprobante de pago - ${gym.rows[0].nombre}`,
+                    html: `
+                        <div style="font-family:'Segoe UI',sans-serif;max-width:500px;margin:0 auto;background:#f9f9f9;border-radius:12px;overflow:hidden;">
+                            <div style="background:#1a1a2e;padding:24px;text-align:center;">
+                                <h1 style="color:#e94560;margin:0;font-size:24px;">💪 ${gym.rows[0].nombre}</h1>
+                                <p style="color:#aaa;margin:8px 0 0;font-size:13px;">Comprobante de pago</p>
+                            </div>
+                            <div style="padding:32px;">
+                                <p style="font-size:16px;color:#333;">Hola <strong>${socio.rows[0].nombre}</strong>,</p>
+                                <p style="color:#666;margin:8px 0 24px;">Tu pago ha sido registrado exitosamente.</p>
+                                <div style="background:white;border-radius:8px;padding:20px;border:1px solid #eee;">
+                                    <table style="width:100%;border-collapse:collapse;">
+                                        <tr><td style="padding:8px 0;color:#888;font-size:13px;">Membresía</td><td style="padding:8px 0;font-weight:600;text-align:right;">${membresia.rows[0].nombre}</td></tr>
+                                        <tr><td style="padding:8px 0;color:#888;font-size:13px;">Monto</td><td style="padding:8px 0;font-weight:600;color:#27ae60;text-align:right;">S/. ${parseFloat(monto).toFixed(2)}</td></tr>
+                                        <tr><td style="padding:8px 0;color:#888;font-size:13px;">Método</td><td style="padding:8px 0;font-weight:600;text-align:right;">${metodo_pago}</td></tr>
+                                        <tr><td style="padding:8px 0;color:#888;font-size:13px;">Fecha de pago</td><td style="padding:8px 0;font-weight:600;text-align:right;">${new Date().toLocaleDateString('es-ES')}</td></tr>
+                                        <tr style="border-top:1px solid #eee;"><td style="padding:12px 0 0;color:#888;font-size:13px;">Vence</td><td style="padding:12px 0 0;font-weight:700;color:#e94560;text-align:right;">${new Date(fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-ES')}</td></tr>
+                                    </table>
+                                </div>
+                                <p style="color:#aaa;font-size:12px;text-align:center;margin-top:24px;">Gracias por tu preferencia 💪</p>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+        }
+        res.json({ mensaje: 'Pago registrado correctamente' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

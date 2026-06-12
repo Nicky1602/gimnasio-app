@@ -136,7 +136,7 @@
             <select id="membresia_id" onchange="calcularVencimiento()"></select>
         </div>
         <div class="form-group">
-            <label>Cantidad de días</label>
+            <label>Cantidad</label>
             <input type="number" id="cantidad_dias" value="1" min="1" onchange="calcularTotal()">
         </div>
         <div class="form-group">
@@ -154,7 +154,10 @@
             <label>Vence</label>
             <input type="date" id="fecha_vencimiento">
         </div>
-        <button class="btn-primary" onclick="registrarPago()">Registrar</button>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:20px;">
+    <input type="checkbox" id="enviar_comprobante" style="width:18px;height:18px;cursor:pointer;">
+    <label style="font-size:13px;color:#555;cursor:pointer;" for="enviar_comprobante">📧 Enviar comprobante</label>
+</div>
     </div>
 </div>
 
@@ -309,6 +312,7 @@ function calcularTotal() {
             const membresia_id = document.getElementById('membresia_id').value;
             const monto = document.getElementById('monto').value;
             const metodo_pago = document.getElementById('metodo_pago').value;
+            const enviar_comprobante = document.getElementById('enviar_comprobante').checked;
             const fecha_vencimiento = document.getElementById('fecha_vencimiento').value;
             const msg = document.getElementById('msg');
             if (!socio_id || !membresia_id || !monto || !fecha_vencimiento) {
@@ -316,7 +320,7 @@ function calcularTotal() {
             }
             const res = await fetch('/api/pagos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago })
+                body: JSON.stringify({ socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, enviar_comprobante })
             });
             if (res.ok) {
                 msg.className = 'msg ok'; msg.textContent = '✅ Pago registrado correctamente.';
