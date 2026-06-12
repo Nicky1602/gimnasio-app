@@ -39,6 +39,21 @@
         td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid #f9f9f9; }
         tr:hover td { background: #fafafa; }
         .avatar { width: 32px; height: 32px; border-radius: 50%; background: #e9456020; color: #e94560; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; margin-right: 8px; }
+    @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; min-height: auto; padding: 12px 0; flex-direction: row; position: fixed; bottom: 0; left: 0; z-index: 50; border-top: 1px solid #ffffff15; }
+    .sidebar-logo { display: none; }
+    .sidebar-menu { padding: 0; display: flex; flex-direction: row; justify-content: space-around; }
+    .menu-item { flex-direction: column; padding: 8px 12px; font-size: 10px; gap: 4px; border-left: none !important; border-top: 3px solid transparent; }
+    .menu-item.active { border-top: 3px solid #e94560; border-left: none; background: #e9456015; }
+    .menu-item span { font-size: 22px; }
+    .sidebar-footer { display: none; }
+    .main { padding: 16px; padding-bottom: 80px; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+}
     </style>
 </head>
 <body>
