@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const session = require('express-session');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(require('cors')());
@@ -59,16 +60,15 @@ async function initDB() {
             observaciones VARCHAR(255)
         );
     `);
-    // Usuario admin por defecto
-    await pool.query(`
-        INSERT INTO Usuarios (username, password) VALUES ('admin', 'admin123')
-        ON CONFLICT (username) DO NOTHING;
-    `);
-    // Membresías por defecto
+    const adminExists = await pool.query('SELECT * FROM Usuarios WHERE username=$1', ['admin']);
+    if (adminExists.rows.length === 0) {
+        const hash = await bcrypt.hash('admin123', 10);
+        await pool.query('INSERT INTO Usuarios (username, password) VALUES ($1,$2)', ['admin', hash]);
+    }
     await pool.query(`
         INSERT INTO Membresias (nombre, precio, duracion_dias) VALUES
         ('Diaria', 5.00, 1), ('Mensual', 120.00, 30), ('Anual', 1200.00, 365)
-        ON CONFLICT DO NOTHING;
+        ON CONFLICT (nombre) DO NOTHING;
     `);
     console.log('Base de datos lista ✅');
 }
@@ -84,8 +84,10 @@ function auth(req, res, next) {
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND password=$2', [username, password]);
+        const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1', [username]);
         if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        const valido = await bcrypt.compare(password, r.rows[0].password);
+        if (!valido) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
         req.session.usuario = r.rows[0].username;
         res.json({ mensaje: 'Login exitoso', usuario: req.session.usuario });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -104,9 +106,12 @@ app.get('/api/sesion', (req, res) => {
 app.post('/api/cambiar-password', async (req, res) => {
     const { username, passwordActual, passwordNueva } = req.body;
     try {
-        const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND password=$2', [username, passwordActual]);
-        if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario o contraseña actual incorrectos' });
-        await pool.query('UPDATE Usuarios SET password=$1 WHERE username=$2', [passwordNueva, username]);
+        const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1', [username]);
+        if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario no encontrado' });
+        const valido = await bcrypt.compare(passwordActual, r.rows[0].password);
+        if (!valido) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+        const hash = await bcrypt.hash(passwordNueva, 10);
+        await pool.query('UPDATE Usuarios SET password=$1 WHERE username=$2', [hash, username]);
         res.json({ mensaje: 'Contraseña actualizada' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
