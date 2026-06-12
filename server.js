@@ -138,8 +138,8 @@ app.get('/api/socios', auth, async (req, res) => {
             LEFT JOIN (
                 SELECT DISTINCT ON (socio_id) socio_id, fecha_vencimiento
                 FROM Pagos
-                ORDER BY socio_id, fecha_pago DESC
-            ) p ON s.id = p.socio_id
+                ORDER BY socio_id, id DESC
+) p ON s.id = p.socio_id 
             WHERE s.gimnasio_id=$1
             ORDER BY s.fecha_registro DESC
         `, [req.session.gimnasio_id]);
