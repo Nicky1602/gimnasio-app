@@ -124,35 +124,39 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>➕ Registrar pago</h3></div>
-            <div id="msg" class="msg"></div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Socio</label>
-                    <select id="socio_id"></select>
-                </div>
-                <div class="form-group">
-                    <label>Membresía</label>
-                    <select id="membresia_id" onchange="calcularVencimiento()"></select>
-                </div>
-                <div class="form-group">
-                    <label>Monto (S/.)</label>
-                    <input type="number" id="monto" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Método de pago</label>
-                    <select id="metodo_pago">
-                        <option value="Efectivo">💵 Efectivo</option>
-                        <option value="Transferencia">📲 Transferencia</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Vence</label>
-                    <input type="date" id="fecha_vencimiento">
-                </div>
-                <button class="btn-primary" onclick="registrarPago()">Registrar</button>
-            </div>
+    <div class="card-header"><h3>➕ Registrar pago</h3></div>
+    <div id="msg" class="msg"></div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Socio</label>
+            <select id="socio_id"></select>
         </div>
+        <div class="form-group">
+            <label>Membresía</label>
+            <select id="membresia_id" onchange="calcularVencimiento()"></select>
+        </div>
+        <div class="form-group">
+            <label>Cantidad de días</label>
+            <input type="number" id="cantidad_dias" value="1" min="1" onchange="calcularTotal()">
+        </div>
+        <div class="form-group">
+            <label>Monto (S/.)</label>
+            <input type="number" id="monto" placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label>Método de pago</label>
+            <select id="metodo_pago">
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia">📲 Transferencia</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Vence</label>
+            <input type="date" id="fecha_vencimiento">
+        </div>
+        <button class="btn-primary" onclick="registrarPago()">Registrar</button>
+    </div>
+</div>
 
         <div class="card">
             <div class="card-header">
@@ -228,18 +232,28 @@
         }
 
         function calcularVencimiento() {
-            const select = document.getElementById('membresia_id');
-            const opt = select.options[select.selectedIndex];
-            if (!opt) return;
-            document.getElementById('monto').value = opt.dataset.precio;
-            const fecha = new Date();
-            fecha.setDate(fecha.getDate() + parseInt(opt.dataset.dias));
-            const yyyy = fecha.getFullYear();
-            const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-            const dd = String(fecha.getDate()).padStart(2, '0');
-            document.getElementById('fecha_vencimiento').value = `${yyyy}-${mm}-${dd}`;
-        }
+    const select = document.getElementById('membresia_id');
+    const opt = select.options[select.selectedIndex];
+    if (!opt) return;
+    document.getElementById('cantidad_dias').value = 1;
+    calcularTotal();
+}
 
+function calcularTotal() {
+    const select = document.getElementById('membresia_id');
+    const opt = select.options[select.selectedIndex];
+    if (!opt) return;
+    const precioPorDia = parseFloat(opt.dataset.precio);
+    const dias = parseInt(opt.dataset.dias);
+    const cantidad = parseInt(document.getElementById('cantidad_dias').value) || 1;
+    document.getElementById('monto').value = (precioPorDia * cantidad).toFixed(2);
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + (dias * cantidad));
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dd = String(fecha.getDate()).padStart(2, '0');
+    document.getElementById('fecha_vencimiento').value = `${yyyy}-${mm}-${dd}`;
+}   
         async function cargarResumen() {
             const res = await fetch('/api/caja/resumen');
             if (!res.ok) return;
