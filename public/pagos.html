@@ -154,10 +154,20 @@
                 <button class="btn-primary" onclick="registrarPago()">Registrar</button>
             </div>
         </div>
-
-        <div class="card-header">
-    <h3>📋 Pagos de hoy</h3>
-    <a href="/api/exportar/pagos/excel" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none;">📊 Exportar Excel</a>
+<div class="card">
+    <div class="card-header">
+        <h3>📋 Pagos de hoy</h3>
+        <a href="/api/exportar/pagos/excel" style="background:#27ae60;color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none;">📊 Exportar Excel</a>
+    </div>
+    <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:16px;">0 pagos</span>
+    <table>
+        <thead>
+            <tr><th>Socio</th><th>Membresía</th><th>Monto</th><th>Método</th><th>Vencimiento</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+    </table>
+</div>
+       
 </div>
             <table>
                 <thead>
