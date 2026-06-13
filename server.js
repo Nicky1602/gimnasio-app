@@ -251,7 +251,7 @@ app.post('/api/pagos', auth, async (req, res) => {
 
             if (socio.rows[0].email) {
                 await resend.emails.send({
-                    from: 'GymManager <onboarding@resend.dev>',
+                    from: 'GymControl <onboarding@resend.dev>',
                     to: socio.rows[0].email,
                     subject: `Comprobante de pago - ${gym.rows[0].nombre}`,
                     html: `
@@ -436,7 +436,7 @@ app.get('/api/exportar/socios/pdf', auth, async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=socios.pdf');
         doc.pipe(res);
-        doc.fontSize(20).fillColor('#e94560').text('GymManager - Lista de Socios', { align: 'center' });
+        doc.fontSize(20).fillColor('#e94560').text('GymControl - Lista de Socios', { align: 'center' });
         doc.moveDown();
         doc.fontSize(10).fillColor('#888').text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, { align: 'center' });
         doc.moveDown();
