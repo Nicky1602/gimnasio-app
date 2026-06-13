@@ -474,35 +474,7 @@ app.get('/api/exportar/pagos/excel', auth, async (req, res) => {
         res.end();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// Registrar nuevo usuario
-app.post('/api/usuarios', auth, isAdmin, async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const existe = await pool.query('SELECT * FROM Usuarios WHERE username=$1', [username]);
-        if (existe.rows.length > 0) return res.status(400).json({ error: 'El usuario ya existe' });
-        const hash = await bcrypt.hash(password, 10);
-        await pool.query('INSERT INTO Usuarios (username, password) VALUES ($1,$2)', [username, hash]);
-        res.json({ mensaje: 'Usuario creado correctamente' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
-// Listar usuarios
-app.get('/api/usuarios', auth, isAdmin, async (req, res) => {
-    try {
-        const r = await pool.query('SELECT id, username FROM Usuarios ORDER BY id');
-        res.json(r.rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Eliminar usuario
-app.delete('/api/usuarios/:id', auth, isAdmin, async (req, res) => {
-    try {
-        const r = await pool.query('SELECT username FROM Usuarios WHERE id=$1', [req.params.id]);
-        if (r.rows[0]?.username === 'admin') return res.status(400).json({ error: 'No puedes eliminar al admin' });
-        await pool.query('DELETE FROM Usuarios WHERE id=$1', [req.params.id]);
-        res.json({ mensaje: 'Usuario eliminado' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
 // Registro de gimnasio
 app.post('/api/registro-gimnasio', async (req, res) => {
     const { nombre, email, password } = req.body;
