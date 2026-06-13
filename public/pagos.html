@@ -326,7 +326,10 @@ function calcularTotal() {
                         <div style="font-size:12px;color:#888;margin-top:4px;">💵 Efectivo: S/. ${parseFloat(c.total_efectivo).toFixed(2)} &nbsp;|&nbsp; 📲 Transferencia: S/. ${parseFloat(c.total_transferencia).toFixed(2)}</div>
                         ${c.observaciones ? `<div style="font-size:12px;color:#aaa;margin-top:2px;">📝 ${c.observaciones}</div>` : ''}
                     </div>
-                    <div style="font-size:20px;font-weight:700;color:#e94560;">S/. ${parseFloat(c.total_general).toFixed(2)}</div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div style="font-size:20px;font-weight:700;color:#e94560;">S/. ${parseFloat(c.total_general).toFixed(2)}</div>
+    <a href="/api/caja/cierre-pdf/${c.id}" style="background:#e94560;color:white;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">📄 Descargar PDF</a>
+</div>
                 </div>
             `).join('');
         }

@@ -529,7 +529,61 @@ app.post('/api/registro-gimnasio', async (req, res) => {
         res.json({ mensaje: 'Gimnasio registrado', codigo });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+app.get('/api/caja/cierre-pdf/:id', auth, async (req, res) => {
+    try {
+        const cierre = await pool.query('SELECT * FROM CierreCaja WHERE id=$1 AND gimnasio_id=$2', [req.params.id, req.session.gimnasio_id]);
+        const gym = await pool.query('SELECT * FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
+        
+        if (cierre.rows.length === 0) return res.status(404).json({ error: 'Cierre no encontrado' });
+        
+        const c = cierre.rows[0];
+        const g = gym.rows[0];
+        const doc = new PDFDocument({ margin: 40, size: 'A5' });
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=cierre-caja-${req.params.id}.pdf`);
+        doc.pipe(res);
 
+        // Header
+        doc.fontSize(18).fillColor('#e94560').text(g.nombre, { align: 'center' });
+        doc.fontSize(11).fillColor('#888').text('Reporte de Cierre de Caja', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#333').text(`Fecha: ${new Date(c.fecha_cierre).toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'})}`, { align: 'center' });
+        doc.fontSize(10).text(`Cajero: ${c.usuario}`, { align: 'center' });
+        doc.moveDown();
+
+        // Línea separadora
+        doc.moveTo(40, doc.y).lineTo(400, doc.y).strokeColor('#eee').stroke();
+        doc.moveDown();
+
+        // Detalle
+        doc.fontSize(12).fillColor('#333');
+        doc.text('💵 Efectivo:', 40, doc.y);
+        doc.text(`S/. ${parseFloat(c.total_efectivo).toFixed(2)}`, { align: 'right' });
+        doc.moveDown(0.5);
+        doc.text('📲 Transferencia:', 40, doc.y);
+        doc.text(`S/. ${parseFloat(c.total_transferencia).toFixed(2)}`, { align: 'right' });
+        doc.moveDown();
+
+        // Línea separadora
+        doc.moveTo(40, doc.y).lineTo(400, doc.y).strokeColor('#eee').stroke();
+        doc.moveDown();
+
+        // Total
+        doc.fontSize(16).fillColor('#e94560').text('TOTAL:', 40, doc.y);
+        doc.text(`S/. ${parseFloat(c.total_general).toFixed(2)}`, { align: 'right' });
+        doc.moveDown();
+
+        // Observaciones
+        if (c.observaciones) {
+            doc.fontSize(10).fillColor('#888').text(`Observaciones: ${c.observaciones}`, { align: 'center' });
+        }
+
+        doc.moveDown();
+        doc.fontSize(9).fillColor('#aaa').text('GymControl - Sistema de Gestión', { align: 'center' });
+        doc.end();
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 app.use(express.static('public'));
 
