@@ -284,14 +284,27 @@ app.post('/api/pagos', auth, async (req, res) => {
 });
 
 // CAJA
+// CAJA
 app.get('/api/caja/resumen', auth, async (req, res) => {
     try {
-        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Efectivo' AND fecha_pago=CURRENT_DATE`, [req.session.gimnasio_id]);
-        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Transferencia' AND fecha_pago=CURRENT_DATE`, [req.session.gimnasio_id]);
+        const gym = await pool.query('SELECT ultimo_cierre FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
+        const ultimoCierre = gym.rows[0].ultimo_cierre;
+        
+        let filtro = 'p.fecha_pago=CURRENT_DATE';
+        let params = [req.session.gimnasio_id];
+        
+        if (ultimoCierre) {
+            filtro = 'p.created_at > $2';
+            params = [req.session.gimnasio_id, ultimoCierre];
+        }
+
+        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p JOIN Socios s ON p.socio_id=s.id WHERE p.gimnasio_id=$1 AND p.metodo_pago='Efectivo' AND p.fecha_pago=CURRENT_DATE ${ultimoCierre ? 'AND p.created_at > $2' : ''}`, params);
+        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p JOIN Socios s ON p.socio_id=s.id WHERE p.gimnasio_id=$1 AND p.metodo_pago='Transferencia' AND p.fecha_pago=CURRENT_DATE ${ultimoCierre ? 'AND p.created_at > $2' : ''}`, params);
         const pagosHoy = await pool.query(`
             SELECT p.id, s.nombre as socio, m.nombre as membresia, p.monto, p.metodo_pago, p.fecha_pago, p.fecha_vencimiento
             FROM Pagos p JOIN Socios s ON p.socio_id=s.id JOIN Membresias m ON p.membresia_id=m.id
-            WHERE p.gimnasio_id=$1 AND p.fecha_pago=CURRENT_DATE ORDER BY p.fecha_pago DESC`, [req.session.gimnasio_id]);
+            WHERE p.gimnasio_id=$1 AND p.fecha_pago=CURRENT_DATE ${ultimoCierre ? 'AND p.created_at > $2' : ''}
+            ORDER BY p.id DESC`, params);
         res.json({
             efectivo: efectivo.rows[0].total,
             transferencia: transferencia.rows[0].total,
@@ -304,16 +317,25 @@ app.get('/api/caja/resumen', auth, async (req, res) => {
 app.post('/api/caja/cierre', auth, async (req, res) => {
     const { observaciones } = req.body;
     try {
-        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Efectivo' AND fecha_pago=CURRENT_DATE`, [req.session.gimnasio_id]);
-        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Transferencia' AND fecha_pago=CURRENT_DATE`, [req.session.gimnasio_id]);
+        const gym = await pool.query('SELECT ultimo_cierre FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
+        const ultimoCierre = gym.rows[0].ultimo_cierre;
+        const params = [req.session.gimnasio_id];
+        if (ultimoCierre) params.push(ultimoCierre);
+
+        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Efectivo' AND fecha_pago=CURRENT_DATE ${ultimoCierre ? 'AND created_at > $2' : ''}`, params);
+        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Transferencia' AND fecha_pago=CURRENT_DATE ${ultimoCierre ? 'AND created_at > $2' : ''}`, params);
         const te = parseFloat(efectivo.rows[0].total);
         const tt = parseFloat(transferencia.rows[0].total);
+        
         await pool.query('INSERT INTO CierreCaja (usuario, total_efectivo, total_transferencia, total_general, observaciones, gimnasio_id) VALUES ($1,$2,$3,$4,$5,$6)',
             [req.session.usuario, te, tt, te+tt, observaciones, req.session.gimnasio_id]);
+        
+        // Actualizar último cierre
+        await pool.query('UPDATE Gimnasios SET ultimo_cierre=NOW() WHERE id=$1', [req.session.gimnasio_id]);
+        
         res.json({ mensaje: 'Cierre realizado', totalEfectivo: te, totalTransferencia: tt, totalGeneral: te+tt });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 app.get('/api/caja/historial', auth, async (req, res) => {
     try {
         const r = await pool.query('SELECT * FROM CierreCaja WHERE gimnasio_id=$1 ORDER BY fecha_cierre DESC', [req.session.gimnasio_id]);
