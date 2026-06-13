@@ -110,7 +110,7 @@
         <div class="topbar">
             <div>
                 <h2>Pagos y Caja</h2>
-                <p>Registra cobros y realiza el cierre diario</p>
+                <p>Registra cobros y realiza el cierre de caja</p>
             </div>
             <button class="btn-cierre" onclick="abrirCierre()">🔒 Cierre de caja</button>
         </div>
@@ -120,21 +120,21 @@
                 <div class="stat-icon green">💵</div>
                 <div class="stat-info">
                     <h3 id="statEfectivo">S/. 0.00</h3>
-                    <p>Efectivo hoy</p>
+                    <p>Efectivo</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon blue">📲</div>
                 <div class="stat-info">
                     <h3 id="statTransferencia">S/. 0.00</h3>
-                    <p>Transferencias hoy</p>
+                    <p>Transferencias</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon red">💰</div>
                 <div class="stat-info">
                     <h3 id="statTotal">S/. 0.00</h3>
-                    <p>Total del día</p>
+                    <p>Total</p>
                 </div>
             </div>
         </div>
@@ -181,7 +181,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h3>📋 Pagos de hoy</h3>
+                <h3>📋 Pagos </h3>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">0 pagos</span>
                     <a href="/api/exportar/pagos/excel" style="background:#27ae60;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">📊 Exportar Excel</a>
@@ -219,7 +219,7 @@
             </div>
             <div class="resumen-total">
                 <div class="monto" id="modalTotal">S/. 0.00</div>
-                <div class="label">Total recaudado hoy</div>
+                <div class="label">Total recaudado</div>
             </div>
             <textarea id="observaciones" placeholder="Observaciones (opcional)..."></textarea>
             <div class="modal-btns">
