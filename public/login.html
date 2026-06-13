@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -46,12 +46,13 @@
             color: #ffc131;
             margin-bottom: 10px;
         }
+
         .brand-logo-img {
-    width: 220px;
-    height: auto;
-    margin-bottom: 5px;
-    margin-top: 10px;
-}
+            width: 220px;
+            height: auto;
+            margin-bottom: 5px;
+            margin-top: 10px;
+        }
 
         .login-card h1 {
             color: #ffffff;
@@ -208,84 +209,58 @@
         .forgot-password:hover { color: #ffc131; }
         .forgot-password .icon-shield { color: #ffc131; font-size: 16px; }
         .footer-text { color: #4b5563; font-size: 11px; letter-spacing: 0.3px; }
+
         @media (max-width: 768px) {
-    .card, .login-card { padding: 32px 24px; }
-    .right { width: 100%; padding: 20px; }
-    .left { display: none; }
-}
+            .card, .login-card { padding: 32px 24px; }
+        }
     </style>
 </head>
-<!-- Modal cambiar contraseña -->
-<div id="modalPassword" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
-    <div style="background:rgba(23,25,30,0.95);border:1px solid #2d3139;border-radius:20px;padding:36px;width:100%;max-width:420px;backdrop-filter:blur(12px);">
-        <h3 style="color:#ffc131;margin-bottom:6px;">🔑 Cambiar contraseña</h3>
-        <p style="color:#9ca3af;font-size:13px;margin-bottom:20px;">Ingresa tu usuario y contraseña actual para crear una nueva.</p>
-        <div id="msgModal" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;border-left:4px solid;"></div>
-        <input type="text" id="mpUsuario" placeholder="Usuario" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;">
-        <input type="password" id="mpActual" placeholder="Contraseña actual" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;">
-        <input type="password" id="mpNueva" placeholder="Nueva contraseña" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:20px;">
-        <div style="display:flex;gap:10px;">
-            <button onclick="cambiarPassword()" style="flex:1;background:#f5b932;color:#111;border:none;padding:13px;border-radius:8px;cursor:pointer;font-weight:600;">Cambiar</button>
-            <button onclick="cerrarModalPassword()" style="flex:1;background:#2d3139;color:#eee;border:none;padding:13px;border-radius:8px;cursor:pointer;">Cancelar</button>
+<body>
+
+    <div id="modalPassword" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
+        <div style="background:rgba(23,25,30,0.95);border:1px solid #2d3139;border-radius:20px;padding:36px;width:100%;max-width:420px;backdrop-filter:blur(12px);">
+            <h3 style="color:#ffc131;margin-bottom:6px;">🛡️ Recuperar contraseña</h3>
+            <p id="modalSubtitle" style="color:#9ca3af;font-size:13px;margin-bottom:20px;">Ingresa tus datos para recibir un código de recuperación.</p>
+            
+            <div id="msgModal" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;border-left:4px solid;"></div>
+
+            <div id="step1">
+                <input type="text" id="mpCodigoGym" placeholder="Código del gimnasio (Ej: A1B2C3D4)" style="text-transform:uppercase;width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;">
+                <input type="text" id="mpUsuario" placeholder="Usuario" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:20px;">
+                
+                <div style="display:flex;gap:10px;">
+                    <button onclick="solicitarCodigo()" style="flex:1;background:#f5b932;color:#111;border:none;padding:13px;border-radius:8px;cursor:pointer;font-weight:600;">Enviar Código</button>
+                    <button onclick="cerrarModalPassword()" style="flex:1;background:#2d3139;color:#eee;border:none;padding:13px;border-radius:8px;cursor:pointer;">Cancelar</button>
+                </div>
+            </div>
+
+            <div id="step2" style="display:none;">
+                <input type="text" id="mpToken" placeholder="Código de 6 dígitos" maxlength="6" style="letter-spacing:4px;text-align:center;font-weight:bold;width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#ffc131;font-size:18px;outline:none;margin-bottom:12px;">
+                <input type="password" id="mpNueva" placeholder="Nueva contraseña" style="width:100%;background:rgba(17,19,23,0.6);border:1px solid #2d3139;border-radius:8px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:20px;">
+                
+                <div style="display:flex;gap:10px;">
+                    <button onclick="confirmarCambio()" style="flex:1;background:#f5b932;color:#111;border:none;padding:13px;border-radius:8px;cursor:pointer;font-weight:600;">Cambiar</button>
+                    <button onclick="cerrarModalPassword()" style="flex:1;background:#2d3139;color:#eee;border:none;padding:13px;border-radius:8px;cursor:pointer;">Cancelar</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
-<script>
-    function abrirModalPassword() {
-        document.getElementById('modalPassword').style.display = 'flex';
-    }
-    function cerrarModalPassword() {
-        document.getElementById('modalPassword').style.display = 'none';
-        document.getElementById('mpUsuario').value = '';
-        document.getElementById('mpActual').value = '';
-        document.getElementById('mpNueva').value = '';
-        document.getElementById('msgModal').style.display = 'none';
-    }
-    async function cambiarPassword() {
-        const username = document.getElementById('mpUsuario').value.trim();
-        const passwordActual = document.getElementById('mpActual').value.trim();
-        const passwordNueva = document.getElementById('mpNueva').value.trim();
-        const msg = document.getElementById('msgModal');
-        if (!username || !passwordActual || !passwordNueva) {
-            msg.style.display = 'block'; msg.style.background = '#4a1a1a'; msg.style.color = '#e94560'; msg.style.borderColor = '#e94560';
-            msg.textContent = 'Completa todos los campos.'; return;
-        }
-        const res = await fetch('/api/cambiar-password', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, passwordActual, passwordNueva })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            msg.style.display = 'block'; msg.style.background = '#1a4a2e'; msg.style.color = '#4caf50'; msg.style.borderColor = '#4caf50';
-            msg.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
-            setTimeout(cerrarModalPassword, 2000);
-        } else {
-            msg.style.display = 'block'; msg.style.background = '#4a1a1a'; msg.style.color = '#e94560'; msg.style.borderColor = '#e94560';
-            msg.textContent = '❌ ' + data.error;
-        }
-    }
-</script>
-</body>
-</html>
-<body>
 
     <div class="login-card">
         <img src="logo.png" alt="GymControl Logo" class="brand-logo-img">
-
-<h1>GymControl</h1>
-<div class="subtitle">Sistema de Gestión de Gimnasio</div>
+        <h1>GymControl</h1>
+        <div class="subtitle">Sistema de Gestión de Gimnasio</div>
         <div class="instruction">Inicia sesión para continuar</div>
 
         <div id="msg" class="msg"></div>
 
         <div class="form-group">
-    <label>Código del gimnasio</label>
-    <div class="input-container">
-        <span class="icon">🏋️</span>
-        <input type="text" id="codigo" placeholder="Ej: A1B2C3D4" autocomplete="off" style="text-transform:uppercase;">
-    </div>
-</div>
+            <label>Código del gimnasio</label>
+            <div class="input-container">
+                <span class="icon">🏋️</span>
+                <input type="text" id="codigo" placeholder="Ej: A1B2C3D4" autocomplete="off" style="text-transform:uppercase;">
+            </div>
+        </div>
 
         <div class="form-group">
             <label>Usuario</label>
@@ -311,39 +286,43 @@
         <a onclick="abrirModalPassword()" class="forgot-password" style="cursor:pointer;">
             <span class="icon-shield">🛡️</span> ¿Olvidaste tu contraseña?
         </a>
-<div style="color:#9ca3af;font-size:13px;margin-bottom:16px;">
-    ¿No tienes cuenta? <a href="/registro.html" style="color:#ffc131;text-decoration:none;">Registra tu gimnasio</a>
-</div>
+        <div style="color:#9ca3af;font-size:13px;margin-bottom:16px;">
+            ¿No tienes cuenta? <a href="/registro.html" style="color:#ffc131;text-decoration:none;">Registra tu gimnasio</a>
+        </div>
         <div class="footer-text">
             © 2026 GymControl. Todos los derechos reservados.
         </div>
     </div>
 
     <script>
+        // --- LÓGICA DEL LOGIN ---
         async function login() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const codigo = document.getElementById('codigo').value.trim().toUpperCase();
-    const msg = document.getElementById('msg');
-    if (!username || !password || !codigo) { 
-        msg.className = 'msg err'; 
-        msg.textContent = 'Completa todos los campos.'; 
-        return; 
-    }
-    try {
-        const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, codigo })
-        });
-        const data = await res.json();
-        if (res.ok) window.location.href = '/index.html';
-        else { msg.className = 'msg err'; msg.textContent = '❌ ' + (data.error || 'Error al iniciar sesión'); }
-    } catch (error) {
-        msg.className = 'msg err';
-        msg.textContent = '❌ No se pudo conectar con el servidor.';
-    }
-}
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const codigo = document.getElementById('codigo').value.trim().toUpperCase();
+            const msg = document.getElementById('msg');
+            
+            if (!username || !password || !codigo) { 
+                msg.className = 'msg err'; 
+                msg.textContent = 'Completa todos los campos.'; 
+                return; 
+            }
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, codigo })
+                });
+                const data = await res.json();
+                
+                if (res.ok) window.location.href = '/index.html';
+                else { msg.className = 'msg err'; msg.textContent = '❌ ' + (data.error || 'Error al iniciar sesión'); }
+            } catch (error) {
+                msg.className = 'msg err';
+                msg.textContent = '❌ No se pudo conectar con el servidor.';
+            }
+        }
 
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
@@ -351,6 +330,102 @@
         }
 
         document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+
+        // --- LÓGICA DE RECUPERACIÓN DE CONTRASEÑA ---
+        function mostrarMensajeModal(texto, exito = false) {
+            const msg = document.getElementById('msgModal');
+            msg.style.display = 'block';
+            if (exito) {
+                msg.style.background = '#1a4a2e'; msg.style.color = '#4caf50'; msg.style.borderColor = '#4caf50';
+            } else {
+                msg.style.background = '#4a1a1a'; msg.style.color = '#e94560'; msg.style.borderColor = '#e94560';
+            }
+            msg.textContent = texto;
+        }
+
+        function abrirModalPassword() {
+            document.getElementById('modalPassword').style.display = 'flex';
+            // Pre-llenar el código de gimnasio si el usuario ya lo escribió en el login
+            document.getElementById('mpCodigoGym').value = document.getElementById('codigo').value;
+            document.getElementById('mpUsuario').value = document.getElementById('username').value;
+        }
+
+        function cerrarModalPassword() {
+            document.getElementById('modalPassword').style.display = 'none';
+            // Limpiar todo y volver al paso 1
+            document.getElementById('mpCodigoGym').value = '';
+            document.getElementById('mpUsuario').value = '';
+            document.getElementById('mpToken').value = '';
+            document.getElementById('mpNueva').value = '';
+            document.getElementById('msgModal').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('modalSubtitle').textContent = 'Ingresa tus datos para recibir un código de recuperación.';
+        }
+
+        // Paso 1: Pedir el código por correo
+        async function solicitarCodigo() {
+            const codigo = document.getElementById('mpCodigoGym').value.trim().toUpperCase();
+            const username = document.getElementById('mpUsuario').value.trim();
+
+            if (!codigo || !username) {
+                mostrarMensajeModal('Completa el código del gimnasio y el usuario.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/olvido-password/solicitar', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, codigo })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    mostrarMensajeModal('✅ ' + data.mensaje, true);
+                    // Ocultar paso 1 y mostrar paso 2
+                    setTimeout(() => {
+                        document.getElementById('step1').style.display = 'none';
+                        document.getElementById('step2').style.display = 'block';
+                        document.getElementById('msgModal').style.display = 'none';
+                        document.getElementById('modalSubtitle').textContent = 'Ingresa el código que enviamos por correo.';
+                    }, 1500);
+                } else {
+                    mostrarMensajeModal('❌ ' + data.error);
+                }
+            } catch (error) {
+                mostrarMensajeModal('❌ Error de conexión.');
+            }
+        }
+
+        // Paso 2: Validar el PIN y guardar la nueva clave
+        async function confirmarCambio() {
+            const codigo = document.getElementById('mpCodigoGym').value.trim().toUpperCase();
+            const username = document.getElementById('mpUsuario').value.trim();
+            const token = document.getElementById('mpToken').value.trim();
+            const passwordNueva = document.getElementById('mpNueva').value.trim();
+
+            if (!token || !passwordNueva) {
+                mostrarMensajeModal('Ingresa el código PIN y tu nueva contraseña.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/olvido-password/confirmar', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, codigo, token, passwordNueva })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    mostrarMensajeModal('✅ Contraseña actualizada. Ya puedes iniciar sesión.', true);
+                    setTimeout(cerrarModalPassword, 2500);
+                } else {
+                    mostrarMensajeModal('❌ ' + data.error);
+                }
+            } catch (error) {
+                mostrarMensajeModal('❌ Error de conexión.');
+            }
+        }
     </script>
 </body>
 </html>

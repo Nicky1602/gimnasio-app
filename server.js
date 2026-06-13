@@ -6,6 +6,7 @@ const PDFDocument = require('pdfkit');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { Resend } = require('resend');
+const resend = new Resend('TU_API_KEY_DE_RESEND'); // Asegúrate de poner tu llave aquí
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const app = express();
@@ -36,13 +37,15 @@ async function initDB() {
                 fecha_registro TIMESTAMP DEFAULT NOW()
             );
             CREATE TABLE IF NOT EXISTS Usuarios (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                rol VARCHAR(20) DEFAULT 'user',
-                gimnasio_id INT REFERENCES Gimnasios(id),
-                UNIQUE(username, gimnasio_id)
-            );
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    rol VARCHAR(20) DEFAULT 'user',
+    gimnasio_id INT REFERENCES Gimnasios(id),
+    reset_token VARCHAR(6),
+    reset_token_expires TIMESTAMP,
+    UNIQUE(username, gimnasio_id)
+);
             CREATE TABLE IF NOT EXISTS Socios (
                 id SERIAL PRIMARY KEY,
                 nombre VARCHAR(100) NOT NULL,
@@ -396,24 +399,119 @@ app.delete('/api/usuarios/:id', auth, isAdmin, async (req, res) => {
 });
 
 // CAMBIAR CONTRASEÑA
-app.post('/api/cambiar-password', async (req, res) => {
-    const { username, passwordActual, passwordNueva, codigo } = req.body;
+// STEP 1: Solicitar código de recuperación por correo
+app.post('/api/olvido-password/solicitar', async (req, res) => {
+    const { username, codigo } = req.body;
     try {
+        // Verificar que el gimnasio exista
         const gym = await pool.query('SELECT * FROM Gimnasios WHERE codigo=$1', [codigo]);
-        if (gym.rows.length === 0) return res.status(401).json({ error: 'Código de gimnasio incorrecto' });
-        
-        const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2', [username, gym.rows[0].id]);
-        if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario no encontrado' });
-        
-        const valido = await bcrypt.compare(passwordActual, r.rows[0].password);
-        if (!valido) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
-        
-        const hash = await bcrypt.hash(passwordNueva, 10);
-        await pool.query('UPDATE Usuarios SET password=$1 WHERE username=$2 AND gimnasio_id=$3', [hash, username, gym.rows[0].id]);
-        res.json({ mensaje: 'Contraseña actualizada' });
+        if (gym.rows.length === 0) return res.status(404).json({ error: 'Código de gimnasio incorrecto' });
+
+        // Verificar que el usuario pertenezca a ese gimnasio
+        const user = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2', [username, gym.rows[0].id]);
+        if (user.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado en este gimnasio' });
+
+        // Generar un token numérico de 6 dígitos y definir expiración (15 minutos)
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 15 * 60 * 1000); 
+
+        // Guardar el token en la base de datos
+        await pool.query('UPDATE Usuarios SET reset_token=$1, reset_token_expires=$2 WHERE id=$3', [token, expires, user.rows[0].id]);
+
+        // Enviar el código al correo del gimnasio usando Resend
+        if (gym.rows[0].email) {
+            await resend.emails.send({
+                from: 'GymControl <onboarding@resend.dev>',
+                to: gym.rows[0].email,
+                subject: `Código de recuperación - ${gym.rows[0].nombre}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                        <h2>Recuperación de contraseña</h2>
+                        <p>Se ha solicitado un cambio de contraseña para el usuario: <strong>${username}</strong></p>
+                        <p>Tu código de verificación de seguridad es:</p>
+                        <div style="background: #f4f4f6; text-align: center; padding: 10px; font-size: 24px; font-weight: bold; color: #e94560; letter-spacing: 4px;">
+                            ${token}
+                        </div>
+                        <p style="font-size: 12px; color: #888; margin-top: 15px;">Este código expirará en 15 minutos.</p>
+                    </div>
+                `
+            });
+        }
+
+        res.json({ mensaje: 'Código enviado al correo del gimnasio' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// STEP 1: Solicitar código de recuperación por correo
+app.post('/api/olvido-password/solicitar', async (req, res) => {
+    const { username, codigo } = req.body;
+    try {
+        // Verificar que el gimnasio exista
+        const gym = await pool.query('SELECT * FROM Gimnasios WHERE codigo=$1', [codigo]);
+        if (gym.rows.length === 0) return res.status(404).json({ error: 'Código de gimnasio incorrecto' });
 
+        // Verificar que el usuario pertenezca a ese gimnasio
+        const user = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2', [username, gym.rows[0].id]);
+        if (user.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado en este gimnasio' });
+
+        // Generar un token numérico de 6 dígitos y definir expiración (15 minutos)
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 15 * 60 * 1000); 
+
+        // Guardar el token en la base de datos
+        await pool.query('UPDATE Usuarios SET reset_token=$1, reset_token_expires=$2 WHERE id=$3', [token, expires, user.rows[0].id]);
+
+        // Enviar el código al correo del gimnasio usando Resend
+        if (gym.rows[0].email) {
+            await resend.emails.send({
+                from: 'GymControl <onboarding@resend.dev>', // Si tienes un dominio configurado, cámbialo aquí
+                to: gym.rows[0].email,
+                subject: `Código de recuperación - ${gym.rows[0].nombre}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                        <h2>Recuperación de contraseña</h2>
+                        <p>Se ha solicitado un cambio de contraseña para el usuario: <strong>${username}</strong></p>
+                        <p>Tu código de verificación de seguridad es:</p>
+                        <div style="background: #f4f4f6; text-align: center; padding: 10px; font-size: 24px; font-weight: bold; color: #e94560; letter-spacing: 4px;">
+                            ${token}
+                        </div>
+                        <p style="font-size: 12px; color: #888; margin-top: 15px;">Este código expirará en 15 minutos.</p>
+                    </div>
+                `
+            });
+        }
+
+        res.json({ mensaje: 'Código enviado al correo del gimnasio' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// STEP 2: Verificar código y cambiar la contraseña sin saber la anterior
+app.post('/api/olvido-password/confirmar', async (req, res) => {
+    const { username, codigo, token, passwordNueva } = req.body;
+    try {
+        const gym = await pool.query('SELECT id FROM Gimnasios WHERE codigo=$1', [codigo]);
+        if (gym.rows.length === 0) return res.status(404).json({ error: 'Código de gimnasio incorrecto' });
+
+        // Buscar al usuario que coincida con el nombre, gimnasio, el token enviado y que no haya expirado
+        const r = await pool.query(
+            'SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2 AND reset_token=$3 AND reset_token_expires > NOW()',
+            [username, gym.rows[0].id, token]
+        );
+        
+        if (r.rows.length === 0) {
+            return res.status(400).json({ error: 'El código es incorrecto o ya ha expirado' });
+        }
+
+        // Encriptar la nueva contraseña
+        const hash = await bcrypt.hash(passwordNueva, 10);
+        
+        // Actualizar contraseña y limpiar los campos del token de recuperación
+        await pool.query(
+            'UPDATE Usuarios SET password=$1, reset_token=NULL, reset_token_expires=NULL WHERE id=$2', 
+            [hash, r.rows[0].id]
+        );
+
+        res.json({ mensaje: 'Contraseña actualizada correctamente' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 // EXPORTAR ARCHIVOS
 app.get('/api/exportar/socios/excel', auth, async (req, res) => {
     try {
