@@ -558,10 +558,10 @@ app.get('/api/caja/cierre-pdf/:id', auth, async (req, res) => {
 
         // Detalle
         doc.fontSize(12).fillColor('#333');
-        doc.text('💵 Efectivo:', 40, doc.y);
+        doc.text('Efectivo:', 40, doc.y);
         doc.text(`S/. ${parseFloat(c.total_efectivo).toFixed(2)}`, { align: 'right' });
         doc.moveDown(0.5);
-        doc.text('📲 Transferencia:', 40, doc.y);
+        doc.text('Transferencia:', 40, doc.y);
         doc.text(`S/. ${parseFloat(c.total_transferencia).toFixed(2)}`, { align: 'right' });
         doc.moveDown();
 
