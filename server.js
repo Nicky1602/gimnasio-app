@@ -6,7 +6,6 @@ const PDFDocument = require('pdfkit');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { Resend } = require('resend');
-const resend = new Resend('TU_API_KEY_DE_RESEND'); // Asegúrate de poner tu llave aquí
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const app = express();
