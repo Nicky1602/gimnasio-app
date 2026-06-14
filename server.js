@@ -244,7 +244,7 @@ app.get('/api/pagos', auth, async (req, res) => {
 app.post('/api/pagos', auth, async (req, res) => {
     const { socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, enviar_comprobante } = req.body;
     try {
-        await pool.query('INSERT INTO Pagos (socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, gimnasio_id) VALUES ($1,$2,$3,$4,$5,$6)',
+        await pool.query('INSERT INTO Pagos (socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, gimnasio_id, cajero) VALUES ($1,$2,$3,$4,$5,$6, $7)',
             [socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, req.session.gimnasio_id]);
 
         if (enviar_comprobante) {
@@ -287,26 +287,30 @@ app.post('/api/pagos', auth, async (req, res) => {
 });
 
 // CAJA
+// CAJA
 app.get('/api/caja/resumen', auth, async (req, res) => {
     try {
-        const gym = await pool.query('SELECT ultimo_cierre FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
-        const ultimoCierre = gym.rows[0].ultimo_cierre;
-        
-        let params = [req.session.gimnasio_id];
-        let subQueryFiltro = ultimoCierre ? 'AND p.created_at > $2' : '';
-        if (ultimoCierre) params.push(ultimoCierre);
+        const usuario = req.session.usuario;
+        const rol = req.session.rol;
+        const gid = req.session.gimnasio_id;
 
-        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p WHERE p.gimnasio_id=$1 AND p.metodo_pago='Efectivo' AND p.fecha_pago=CURRENT_DATE ${subQueryFiltro}`, params);
-        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p WHERE p.gimnasio_id=$1 AND p.metodo_pago='Transferencia' AND p.fecha_pago=CURRENT_DATE ${subQueryFiltro}`, params);
-        
+        // Obtener último cierre del cajero actual
+        const ultimoCierreQ = await pool.query('SELECT ultimo_cierre FROM CierresCajero WHERE usuario=$1 AND gimnasio_id=$2 ORDER BY ultimo_cierre DESC LIMIT 1', [usuario, gid]);
+        const ultimoCierre = ultimoCierreQ.rows.length > 0 ? ultimoCierreQ.rows[0].ultimo_cierre : null;
+
+        // Admin ve todos, usuario solo los suyos
+        const filtroUsuario = rol === 'admin' ? '' : `AND p.cajero=$2`;
+        const params = rol === 'admin' ? [gid] : [gid, usuario];
+        const extraParam = ultimoCierre ? [...params, ultimoCierre] : params;
+        const extraFiltro = ultimoCierre ? `AND p.created_at > $${params.length + 1}` : '';
+
+        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p WHERE p.gimnasio_id=$1 ${filtroUsuario} AND p.metodo_pago='Efectivo' AND p.fecha_pago=CURRENT_DATE ${extraFiltro}`, extraParam);
+        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos p WHERE p.gimnasio_id=$1 ${filtroUsuario} AND p.metodo_pago='Transferencia' AND p.fecha_pago=CURRENT_DATE ${extraFiltro}`, extraParam);
         const pagosHoy = await pool.query(`
-            SELECT p.id, s.nombre as socio, m.nombre as membresia, p.monto, p.metodo_pago, p.fecha_pago, p.fecha_vencimiento
-            FROM Pagos p 
-            JOIN Socios s ON p.socio_id=s.id 
-            JOIN Membresias m ON p.membresia_id=m.id
-            WHERE p.gimnasio_id=$1 AND p.fecha_pago=CURRENT_DATE ${subQueryFiltro}
-            ORDER BY p.id DESC`, params);
-
+            SELECT p.id, s.nombre as socio, m.nombre as membresia, p.monto, p.metodo_pago, p.fecha_pago, p.fecha_vencimiento, p.cajero
+            FROM Pagos p JOIN Socios s ON p.socio_id=s.id JOIN Membresias m ON p.membresia_id=m.id
+            WHERE p.gimnasio_id=$1 ${filtroUsuario} AND p.fecha_pago=CURRENT_DATE ${extraFiltro}
+            ORDER BY p.id DESC`, extraParam);
         res.json({
             efectivo: efectivo.rows[0].total,
             transferencia: transferencia.rows[0].total,
@@ -319,33 +323,47 @@ app.get('/api/caja/resumen', auth, async (req, res) => {
 app.post('/api/caja/cierre', auth, async (req, res) => {
     const { observaciones } = req.body;
     try {
-        const gym = await pool.query('SELECT ultimo_cierre FROM Gimnasios WHERE id=$1', [req.session.gimnasio_id]);
-        const ultimoCierre = gym.rows[0].ultimo_cierre;
-        const params = [req.session.gimnasio_id];
-        let subQueryFiltro = ultimoCierre ? 'AND created_at > $2' : '';
-        if (ultimoCierre) params.push(ultimoCierre);
+        const usuario = req.session.usuario;
+        const rol = req.session.rol;
+        const gid = req.session.gimnasio_id;
 
-        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Efectivo' AND fecha_pago=CURRENT_DATE ${subQueryFiltro}`, params);
-        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 AND metodo_pago='Transferencia' AND fecha_pago=CURRENT_DATE ${subQueryFiltro}`, params);
+        const ultimoCierreQ = await pool.query('SELECT ultimo_cierre FROM CierresCajero WHERE usuario=$1 AND gimnasio_id=$2 ORDER BY ultimo_cierre DESC LIMIT 1', [usuario, gid]);
+        const ultimoCierre = ultimoCierreQ.rows.length > 0 ? ultimoCierreQ.rows[0].ultimo_cierre : null;
+
+        const filtroUsuario = rol === 'admin' ? '' : `AND cajero=$2`;
+        const params = rol === 'admin' ? [gid] : [gid, usuario];
+        const extraParam = ultimoCierre ? [...params, ultimoCierre] : params;
+        const extraFiltro = ultimoCierre ? `AND created_at > $${params.length + 1}` : '';
+
+        const efectivo = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 ${filtroUsuario} AND metodo_pago='Efectivo' AND fecha_pago=CURRENT_DATE ${extraFiltro}`, extraParam);
+        const transferencia = await pool.query(`SELECT COALESCE(SUM(monto),0) as total FROM Pagos WHERE gimnasio_id=$1 ${filtroUsuario} AND metodo_pago='Transferencia' AND fecha_pago=CURRENT_DATE ${extraFiltro}`, extraParam);
         const te = parseFloat(efectivo.rows[0].total);
         const tt = parseFloat(transferencia.rows[0].total);
-        
+
         await pool.query('INSERT INTO CierreCaja (usuario, total_efectivo, total_transferencia, total_general, observaciones, gimnasio_id) VALUES ($1,$2,$3,$4,$5,$6)',
-            [req.session.usuario, te, tt, te+tt, observaciones, req.session.gimnasio_id]);
-        
-        await pool.query('UPDATE Gimnasios SET ultimo_cierre=NOW() WHERE id=$1', [req.session.gimnasio_id]);
-        
+            [usuario, te, tt, te+tt, observaciones, gid]);
+
+        // Registrar cierre del cajero
+        await pool.query('INSERT INTO CierresCajero (usuario, gimnasio_id) VALUES ($1,$2)', [usuario, gid]);
+
         res.json({ mensaje: 'Cierre realizado', totalEfectivo: te, totalTransferencia: tt, totalGeneral: te+tt });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/caja/historial', auth, async (req, res) => {
     try {
-        const r = await pool.query('SELECT * FROM CierreCaja WHERE gimnasio_id=$1 ORDER BY fecha_cierre DESC', [req.session.gimnasio_id]);
+        const usuario = req.session.usuario;
+        const rol = req.session.rol;
+        const gid = req.session.gimnasio_id;
+        let r;
+        if (rol === 'admin') {
+            r = await pool.query('SELECT * FROM CierreCaja WHERE gimnasio_id=$1 ORDER BY fecha_cierre DESC', [gid]);
+        } else {
+            r = await pool.query('SELECT * FROM CierreCaja WHERE gimnasio_id=$1 AND usuario=$2 ORDER BY fecha_cierre DESC', [gid, usuario]);
+        }
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 // REPORTES
 app.get('/api/reportes', auth, async (req, res) => {
     try {
