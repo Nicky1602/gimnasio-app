@@ -684,6 +684,10 @@ app.post('/api/admin-secret/aprobar-gimnasio', async (req, res) => {
         res.json({ mensaje: 'Gimnasio aprobado' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+app.get('/', (req, res) => {
+    res.sendFile('landing.html', { root: 'public' });
+});
+
 
 app.use(express.static('public'));
 
