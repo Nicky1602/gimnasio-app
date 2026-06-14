@@ -106,18 +106,15 @@ app.post('/api/login', async (req, res) => {
     try {
         const gym = await pool.query('SELECT * FROM Gimnasios WHERE codigo=$1', [codigo]);
         if (gym.rows.length === 0) return res.status(401).json({ error: 'Código de gimnasio incorrecto' });
-        
+        if (gym.rows[0].estado === 'pendiente') return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación. Contáctanos por WhatsApp para activarla.' });
         const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2', [username, gym.rows[0].id]);
         if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
-        
         const valido = await bcrypt.compare(password, r.rows[0].password);
         if (!valido) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
-        
         req.session.usuario = r.rows[0].username;
         req.session.gimnasio_id = gym.rows[0].id;
         req.session.gimnasio_nombre = gym.rows[0].nombre;
         req.session.rol = r.rows[0].rol;
-        
         res.json({ mensaje: 'Login exitoso', usuario: r.rows[0].username, gimnasio: gym.rows[0].nombre, rol: r.rows[0].rol });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -676,6 +673,15 @@ app.get('/api/caja/cierre-pdf/:id', auth, async (req, res) => {
         doc.moveDown();
         doc.fontSize(9).fillColor('#aaa').text('GymControl - Sistema de Gestión', { align: 'center' });
         doc.end();
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// Aprobar gimnasio (solo tú sabes esta URL)
+app.post('/api/admin-secret/aprobar-gimnasio', async (req, res) => {
+    const { codigo, secret } = req.body;
+    if (secret !== 'gymcontrol2026secret') return res.status(403).json({ error: 'No autorizado' });
+    try {
+        await pool.query("UPDATE Gimnasios SET estado='activo' WHERE codigo=$1", [codigo]);
+        res.json({ mensaje: 'Gimnasio aprobado' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
