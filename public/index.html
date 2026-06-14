@@ -263,7 +263,7 @@ const registradosHoy = socios.filter(s => {
         <td><span class="avatar">${inicial}</span>${s.nombre}</td>
         <td>${s.email}</td>
         <td>${s.telefono || '-'}</td>
-        <td>${new Date(s.fecha_registro).toLocaleDateString('es-ES')}</td>
+        <td>${s.fecha_registro ? s.fecha_registro.split('T')[0].split('-').reverse().join('/') : '-'}</td>
         <td>${vence}</td>
         <td><span class="${estadoClass}">${s.estado_membresia}</span></td>
         <td>
