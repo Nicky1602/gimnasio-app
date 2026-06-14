@@ -562,7 +562,7 @@ app.get('/api/exportar/socios/pdf', auth, async (req, res) => {
         doc.fontSize(10).fillColor('#888').text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, { align: 'center' });
         doc.moveDown();
         r.rows.forEach(s => {
-            doc.fontSize(11).fillColor('#333').text(`${s.nombre}   |   ${s.email}   |   ${s.telefono || '-'}   |   ${new Date(s.fecha_registro).toLocaleDateString('es-ES')}`);
+            doc.fontSize(10).fillColor('#333').text(`Fecha: ${new Date(c.fecha_cierre).toLocaleString('es-ES', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'})}`, { align: 'center' });
             doc.moveDown(0.5);
         });
         doc.end();
