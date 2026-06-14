@@ -244,9 +244,8 @@ app.get('/api/pagos', auth, async (req, res) => {
 app.post('/api/pagos', auth, async (req, res) => {
     const { socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, enviar_comprobante } = req.body;
     try {
-        await pool.query('INSERT INTO Pagos (socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, gimnasio_id, cajero) VALUES ($1,$2,$3,$4,$5,$6, $7)',
-            [socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, req.session.gimnasio_id]);
-
+        await pool.query('INSERT INTO Pagos (socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, gimnasio_id, cajero) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [socio_id, membresia_id, monto, fecha_vencimiento, metodo_pago, req.session.gimnasio_id, req.session.usuario]);
         if (enviar_comprobante) {
             const socio = await pool.query('SELECT * FROM Socios WHERE id=$1', [socio_id]);
             const membresia = await pool.query('SELECT * FROM Membresias WHERE id=$1', [membresia_id]);
