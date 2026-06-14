@@ -17,9 +17,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
-
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_RnJHyrfbl3g2@ep-frosty-thunder-acws25ss.sa-east-1.aws.neon.tech/neondb?sslmode=require',
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
