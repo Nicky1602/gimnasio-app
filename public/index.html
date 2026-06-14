@@ -3,325 +3,871 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="logoPG.ico" type="image/x-icon">
-    <title>Gimnasio Manager</title>
+    <title>GymControl - Sistema de Gestión para Gimnasios</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; display: flex; min-height: 100vh; }
 
-        /* Sidebar */
-        .sidebar { width: 240px; background: #1a1a2e; min-height: 100vh; padding: 24px 0; display: flex; flex-direction: column; }
-        .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid #ffffff15; }
-        .sidebar-logo h1 { color: #e94560; font-size: 20px; }
-        .sidebar-logo p { color: #aaa; font-size: 12px; margin-top: 4px; }
-        .sidebar-menu { padding: 24px 0; flex: 1; }
-        .menu-item { padding: 12px 24px; color: #aaa; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all .2s; text-decoration: none; }
-        .menu-item:hover, .menu-item.active { background: #e9456015; color: #e94560; border-left: 3px solid #e94560; }
-        .menu-item span { font-size: 18px; }
-        .sidebar-footer { padding: 16px 24px; border-top: 1px solid #ffffff15; }
-        .sidebar-footer button { width: 100%; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; }
-        .sidebar-footer button:hover { background: #e94560; color: white; }
-        .badge-activo { background: #eefff5; color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.badge-vencido { background: #ffeef1; color: #e94560; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.badge-sin { background: #f5f5f5; color: #888; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        :root {
+            --rojo: #e94560;
+            --rojo-dark: #c73652;
+            --negro: #0d0d0d;
+            --gris-dark: #1a1a2e;
+            --gris-mid: #16213e;
+            --gris-light: #f0f2f5;
+            --blanco: #ffffff;
+            --texto-gris: #6b7280;
+            --verde: #27ae60;
+            --amarillo: #f5b932;
+        }
 
-        /* Main */
-        .main { flex: 1; padding: 32px; overflow-y: auto; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-        .topbar h2 { font-size: 22px; color: #1a1a2e; }
-        .topbar p { color: #888; font-size: 13px; margin-top: 2px; }
-        .user-badge { background: #1a1a2e; color: #e94560; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--blanco);
+            color: var(--negro);
+            overflow-x: hidden;
+        }
 
-        /* Stats */
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
-        .stat-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 16px; }
-        .stat-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        .stat-icon.red { background: #ffeef1; }
-        .stat-icon.blue { background: #eef4ff; }
-        .stat-icon.green { background: #eefff5; }
-        .stat-info h3 { font-size: 26px; color: #1a1a2e; font-weight: 700; }
-        .stat-info p { color: #888; font-size: 13px; }
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(13, 13, 13, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
 
-        /* Cards */
-        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card-header h3 { font-size: 16px; color: #1a1a2e; font-weight: 600; }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--blanco);
+            font-size: 20px;
+            font-weight: 800;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
 
-        /* Form */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
-        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; font-weight: 500; }
-        .form-group input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 14px; color: #333; outline: none; transition: border .2s; }
-        .form-group input:focus { border-color: #e94560; }
-        .btn-primary { background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background .2s; }
-        .btn-primary:hover { background: #c73652; }
-        .btn-edit { background: #fff3e0; color: #f0a500; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
-        .btn-delete { background: #ffeef1; color: #e94560; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; margin-left: 6px; }
+        .nav-logo span { color: var(--rojo); }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; }
-        th { padding: 12px 16px; text-align: left; font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
-        td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #f9f9f9; }
-        tr:hover td { background: #fafafa; }
-        .avatar { width: 34px; height: 34px; border-radius: 50%; background: #e9456020; color: #e94560; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
 
-        /* Badge */
-        .badge { background: #eefff5; color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color .2s;
+        }
 
-        /* Msg */
-        .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: none; }
-        .msg.ok { background: #eefff5; color: #27ae60; display: block; }
-        .msg.err { background: #ffeef1; color: #e94560; display: block; }
+        .nav-links a:hover { color: var(--blanco); }
 
-        /* Modal */
-        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
-        .modal-bg.active { display: flex; }
-        .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
-        .modal h3 { font-size: 18px; margin-bottom: 20px; color: #1a1a2e; }
-        .modal input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 14px; margin-bottom: 12px; outline: none; }
-        .modal input:focus { border-color: #e94560; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
-        .btn-secondary { background: #f5f5f5; color: #555; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .cerrar-sesion-mobile { display: none; }
-        /* RESPONSIVE MÓVIL */
-@media (max-width: 768px) {
-    body { flex-direction: column; }
-    .sidebar { width: 100%; min-height: auto; padding: 12px 0; flex-direction: row; position: fixed; bottom: 0; left: 0; z-index: 50; border-top: 1px solid #ffffff15; }
-    .sidebar-logo { display: none; }
-    .sidebar-menu { padding: 0; display: flex; flex-direction: row; justify-content: space-around; }
-    .menu-item { flex-direction: column; padding: 8px 12px; font-size: 10px; gap: 4px; border-left: none !important; border-top: 3px solid transparent; }
-    .menu-item.active { border-top: 3px solid #e94560; border-left: none; background: #e9456015; }
-    .menu-item span { font-size: 22px; }
-    .sidebar-footer { display: none; }
-    .cerrar-sesion-mobile { display: flex; align-items: center; justify-content: center; padding: 8px 12px; color: #e94560; font-size: 10px; gap: 4px; cursor: pointer; flex-direction: column; }
-    .cerrar-sesion-mobile span { font-size: 22px; }
-    .main { padding: 16px; padding-bottom: 80px; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .stats { grid-template-columns: 1fr 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
-    .user-badge { font-size: 11px; }
-    table { display: block; overflow-x: auto; white-space: nowrap; }
-}
+        .nav-cta {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-outline {
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--blanco);
+            background: transparent;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .btn-outline:hover { border-color: var(--rojo); color: var(--rojo); }
+
+        .btn-primary {
+            background: var(--rojo);
+            color: var(--blanco);
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .2s;
+        }
+
+        .btn-primary:hover { background: var(--rojo-dark); }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            background: var(--negro);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(233,69,96,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(233,69,96,0.1);
+            border: 1px solid rgba(233,69,96,0.3);
+            color: var(--rojo);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            letter-spacing: 0.3px;
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 72px);
+            font-weight: 900;
+            color: var(--blanco);
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+
+        .hero h1 span { color: var(--rojo); }
+
+        .hero p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.5);
+            max-width: 520px;
+            line-height: 1.6;
+            margin: 0 auto 40px;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            background: var(--rojo);
+            color: var(--blanco);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-primary:hover {
+            background: var(--rojo-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(233,69,96,0.35);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255,255,255,0.06);
+            color: var(--blanco);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* STATS */
+        .stats-bar {
+            background: var(--gris-dark);
+            padding: 32px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .stat-item { text-align: center; }
+        .stat-item .number { font-size: 32px; font-weight: 800; color: var(--blanco); }
+        .stat-item .number span { color: var(--rojo); }
+        .stat-item .label { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+        /* FEATURES */
+        .features {
+            padding: 100px 40px;
+            background: var(--gris-light);
+        }
+
+        .section-label {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--rojo);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 800;
+            color: var(--negro);
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .section-sub {
+            text-align: center;
+            font-size: 16px;
+            color: var(--texto-gris);
+            max-width: 500px;
+            margin: 0 auto 60px;
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--blanco);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: #ffeef1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--negro);
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--texto-gris);
+            line-height: 1.6;
+        }
+
+        /* PREVIEW */
+        .preview {
+            background: var(--negro);
+            padding: 100px 40px;
+            text-align: center;
+        }
+
+        .preview .section-title { color: var(--blanco); }
+        .preview .section-sub { color: rgba(255,255,255,0.4); }
+
+        .preview-img {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--gris-dark);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .preview-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .preview-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+
+        .preview-dot:nth-child(1) { background: #ff5f57; }
+        .preview-dot:nth-child(2) { background: #febc2e; }
+        .preview-dot:nth-child(3) { background: #28c840; }
+
+        .preview-screen {
+            background: #f0f2f5;
+            border-radius: 8px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 16px;
+            min-height: 320px;
+        }
+
+        .preview-sidebar {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .preview-logo {
+            color: #e94560;
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .preview-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .preview-menu-item.active {
+            background: rgba(233,69,96,0.1);
+            color: #e94560;
+        }
+
+        .preview-content { display: flex; flex-direction: column; gap: 12px; }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .preview-stat {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .preview-stat strong {
+            display: block;
+            font-size: 20px;
+            color: #1a1a2e;
+            font-weight: 800;
+        }
+
+        .preview-table {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            flex: 1;
+        }
+
+        .preview-table-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr 1fr;
+            gap: 8px;
+            font-size: 10px;
+            color: #aaa;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 8px;
+        }
+
+        .preview-table-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+            color: #333;
+            padding: 6px 0;
+            border-bottom: 1px solid #f9f9f9;
+            align-items: center;
+        }
+
+        .badge-activo {
+            background: #eefff5;
+            color: #27ae60;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .badge-vencido {
+            background: #ffeef1;
+            color: #e94560;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* PRICING */
+        .pricing {
+            padding: 100px 40px;
+            background: var(--gris-light);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--blanco);
+            border-radius: 20px;
+            padding: 36px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            background: var(--gris-dark);
+            border: 2px solid var(--rojo);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--rojo);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pricing-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--negro);
+            margin-bottom: 8px;
+        }
+
+        .pricing-card.popular h3 { color: var(--blanco); }
+
+        .pricing-price {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--negro);
+            letter-spacing: -2px;
+            margin: 16px 0 4px;
+        }
+
+        .pricing-card.popular .pricing-price { color: var(--blanco); }
+
+        .pricing-period {
+            font-size: 14px;
+            color: var(--texto-gris);
+            margin-bottom: 24px;
+        }
+
+        .pricing-card.popular .pricing-period { color: rgba(255,255,255,0.5); }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--texto-gris);
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .pricing-card.popular .pricing-features li {
+            color: rgba(255,255,255,0.7);
+            border-color: rgba(255,255,255,0.06);
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--verde);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .btn-pricing {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            transition: all .2s;
+        }
+
+        .btn-pricing-outline {
+            border: 2px solid var(--rojo);
+            color: var(--rojo);
+            background: transparent;
+        }
+
+        .btn-pricing-outline:hover { background: var(--rojo); color: white; }
+
+        .btn-pricing-solid {
+            background: var(--rojo);
+            color: white;
+            border: none;
+        }
+
+        .btn-pricing-solid:hover { background: var(--rojo-dark); }
+
+        /* TESTIMONIAL */
+        .cta-section {
+            background: var(--negro);
+            padding: 100px 40px;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(28px, 4vw, 48px);
+            font-weight: 900;
+            color: var(--blanco);
+            letter-spacing: -1.5px;
+            margin-bottom: 16px;
+        }
+
+        .cta-section h2 span { color: var(--rojo); }
+
+        .cta-section p {
+            font-size: 16px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 40px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all .2s;
+        }
+
+        .btn-whatsapp:hover {
+            background: #1fb855;
+            transform: translateY(-2px);
+        }
+
+        /* FOOTER */
+        footer {
+            background: #080808;
+            padding: 32px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer-logo {
+            color: var(--blanco);
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .footer-logo span { color: var(--rojo); }
+
+        footer p {
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+        }
+
+        footer a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color .2s;
+        }
+
+        footer a:hover { color: var(--blanco); }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            nav { padding: 14px 20px; }
+            .nav-links { display: none; }
+            .stats-bar { gap: 32px; padding: 24px 20px; }
+            .features { padding: 60px 20px; }
+            .preview { padding: 60px 20px; }
+            .pricing { padding: 60px 20px; }
+            .cta-section { padding: 60px 20px; }
+            .preview-screen { grid-template-columns: 1fr; }
+            .preview-sidebar { display: none; }
+            footer { flex-direction: column; text-align: center; }
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-logo">
-            <h1>💪 GymControl</h1>
-            <p>Panel de administración</p>
-        </div>
-        <div class="sidebar-menu">
-            <a href="/index.html" class="menu-item active"><span>👥</span> Socios</a>
-            <a href="/membresias.html" class="menu-item menu-membresias"><span>💳</span> Membresías</a>
-            <a href="/usuarios.html" class="menu-item menu-usuarios"><span>👤</span> Usuarios</a>
-            <a href="/pagos.html" class="menu-item"><span>💰</span> Pagos</a>
-            <a href="/reportes.html" class="menu-item"><span>📊</span> Reportes</a>
-           
-        </div>
-        
-        <div class="sidebar-footer">
-            <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
-        </div>
-    </div>
 
-    <!-- Main -->
-    <div class="main">
-        <div class="topbar">
-            <div>
-                <h2>Gestión de Socios</h2>
-                <p>Administra los miembros del gimnasio</p>
-            </div>
-            <div class="user-badge" id="userBadge">👤 admin</div>
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="nav-logo">💪 Gym<span>Control</span></a>
+        <div class="nav-links">
+            <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#precios">Precios</a>
+            <a href="#contacto">Contacto</a>
         </div>
+        <div class="nav-cta">
+            <a href="/login.html" class="btn-outline">Iniciar sesión</a>
+            <a href="/registro.html" class="btn-primary">Prueba gratis</a>
+        </div>
+    </nav>
 
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-icon red">👥</div>
-                <div class="stat-info">
-                    <h3 id="statTotal">0</h3>
-                    <p>Total de socios</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon blue">📅</div>
-                <div class="stat-info">
-                    <h3 id="statHoy">0</h3>
-                    <p>Registrados hoy</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green">✅</div>
-                <div class="stat-info">
-                    <h3 id="statActivos">0</h3>
-                    <p>Socios activos</p>
-                </div>
+    <!-- HERO -->
+    <section class="hero">
+        <div>
+            <div class="hero-badge">🚀 Sistema de gestión para gimnasios</div>
+            <h1>Controla tu gimnasio<br>desde cualquier <span>celular</span></h1>
+            <p>Socios, membresías, pagos y reportes en un solo lugar. Sin instalar nada, sin complicaciones.</p>
+            <div class="hero-btns">
+                <a href="/registro.html" class="btn-hero-primary">Empieza gratis →</a>
+                <a href="#funcionalidades" class="btn-hero-secondary">Ver funcionalidades</a>
             </div>
         </div>
+    </section>
 
-        <!-- Formulario -->
-        <div class="card">
-            <div class="card-header">
-                <h3>➕ Agregar nuevo socio</h3>
-            </div>
-            <div id="msg" class="msg"></div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Nombre completo</label>
-                    <input type="text" id="nombre" placeholder="Ej: Juan Pérez">
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" placeholder="juan@email.com">
-                </div>
-                <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="text" id="telefono" placeholder="555-1234">
-                </div>
-                <button class="btn-primary" onclick="agregarSocio()">Agregar</button>
-            </div>
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="number">100<span>%</span></div>
+            <div class="label">En la nube, sin instalar</div>
         </div>
-
-        <!-- Tabla -->
-        <div class="card">
-    <div class="card-header">
-        <h3>📋 Lista de socios</h3>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <span id="totalBadge" style="background:#ffeef1;color:#e94560;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">0 socios</span>
-            <a href="/api/exportar/socios/excel" style="background:#27ae60;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">📊 Excel</a>
-            <a href="/api/exportar/socios/pdf" style="background:#e94560;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">📄 PDF</a>
+        <div class="stat-item">
+            <div class="number">24<span>/7</span></div>
+            <div class="label">Disponible siempre</div>
         </div>
-    </div>
-    <table>
-        <thead>
-           <tr>
-    <th>Socio</th>
-    <th>Email</th>
-    <th>Teléfono</th>
-    <th>Registro</th>
-    <th>Vencimiento</th>
-    <th>Estado</th>
-    <th>Acciones</th>
-</tr>
-        </thead>
-        <tbody id="tabla"></tbody>
-    </table>
+        <div class="stat-item">
+            <div class="number">5<span>min</span></div>
+            <div class="label">Para empezar a usarlo</div>
+        </div>
+        <div class="stat-item">
+    <div class="number">S/.<span>99</span></div>
+    <div class="label">Precio mensual</div>
 </div>
-
-    <!-- Modal editar -->
-    <div class="modal-bg" id="modalBg">
-        <div class="modal">
-            <h3>✏️ Editar Socio</h3>
-            <input type="hidden" id="editId">
-            <input type="text" id="editNombre" placeholder="Nombre completo">
-            <input type="email" id="editEmail" placeholder="Email">
-            <input type="text" id="editTelefono" placeholder="Teléfono">
-            <div class="modal-btns">
-                <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
-                <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
-            </div>
-        </div>
     </div>
 
-    <script>
-        async function verificarSesion() {
-    const res = await fetch('/api/sesion');
-    if (!res.ok) window.location.href = '/login.html';
-    else {
-        const data = await res.json();
-        if (data.rol !== 'admin') {
-            document.querySelectorAll('.menu-membresias, .menu-usuarios').forEach(el => el.style.display = 'none');
-        }
-    }
-}
+    <!-- PREVIEW -->
+    <section class="preview">
+        <div class="section-label">Vista previa</div>
+        <h2 class="section-title" style="color:white;">Así se ve GymControl</h2>
+        <p class="section-sub">Diseño limpio y profesional que cualquier persona puede usar sin capacitación.</p>
 
-        async function cerrarSesion() {
-            await fetch('/api/logout', { method: 'POST' });
-            window.location.href = '/login.html';
-        }
+        <div class="preview-img">
+            <div class="preview-bar">
+                <div class="preview-dot"></div>
+                <div class="preview-dot"></div>
+                <div class="preview-dot"></div>
+            </div>
+            <div class="preview-screen">
+                <div class="preview-sidebar">
+                    <div class="preview-logo">💪 GymControl</div>
+                    <div class="preview-menu-item active">👥 Socios</div>
+                    <div class="preview-menu-item">💳 Membresías</div>
+                    <div class="preview-menu-item">💰 Pagos</div>
+                    <div class="preview-menu-item">📊 Reportes</div>
+                    <div class="preview-menu-item">👤 Usuarios</div>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-stats">
+                        <div class="preview-stat"><strong>24</strong>Total socios</div>
+                        <div class="preview-stat"><strong>3</strong>Registrados hoy</div>
+                        <div class="preview-stat"><strong>21</strong>Socios activos</div>
+                    </div>
+                    <div class="preview-table">
+                        <div class="preview-table-header">
+                            <span>Socio</span><span>Email</span><span>Vencimiento</span><span>Estado</span>
+                        </div>
+                        <div class="preview-table-row">
+                            <span>Carlos García</span><span>carlos@email.com</span><span>30/06/2026</span><span><span class="badge-activo">Activo</span></span>
+                        </div>
+                        <div class="preview-table-row">
+                            <span>María López</span><span>maria@email.com</span><span>15/06/2026</span><span><span class="badge-activo">Activo</span></span>
+                        </div>
+                        <div class="preview-table-row">
+                            <span>Juan Pérez</span><span>juan@email.com</span><span>10/06/2026</span><span><span class="badge-vencido">Vencido</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        async function cargarSocios() {
-            const res = await fetch('/api/socios');
-            if (!res.ok) { window.location.href = '/login.html'; return; }
-            const socios = await res.json();
-            const hoy = new Date().toISOString().split('T')[0];
-            const registradosHoy = socios.filter(s => {
-            const fecha = s.fecha_registro ? s.fecha_registro.split('T')[0] : '';
-    return fecha === hoy;
-}).length;
-            document.getElementById('statTotal').textContent = socios.length;
-            document.getElementById('statHoy').textContent = registradosHoy;
-            document.getElementById('statActivos').textContent = socios.length;
-            document.getElementById('totalBadge').textContent = socios.length + ' socios';
-         document.getElementById('tabla').innerHTML = socios.map(s => {
-    const inicial = s.nombre.charAt(0).toUpperCase();
-    const estadoClass = s.estado_membresia === 'Activo' ? 'badge-activo' : s.estado_membresia === 'Vencido' ? 'badge-vencido' : 'badge-sin';
-    const vence = s.fecha_vencimiento ? s.fecha_vencimiento.split('T')[0].split('-').reverse().join('/') : '-';
-    return `<tr>
-        <td><span class="avatar">${inicial}</span>${s.nombre}</td>
-        <td>${s.email}</td>
-        <td>${s.telefono || '-'}</td>
-        <td>${s.fecha_registro ? s.fecha_registro.split('T')[0].split('-').reverse().join('/') : '-'}</td>
-        <td>${vence}</td>
-        <td><span class="${estadoClass}">${s.estado_membresia}</span></td>
-        <td>
-            <button class="btn-edit" onclick="abrirEditar(${s.id},'${s.nombre}','${s.email}','${s.telefono||''}')">✏️ Editar</button>
-            <button class="btn-delete" onclick="eliminarSocio(${s.id})">🗑️ Eliminar</button>
-        </td>
-    </tr>`;
-}).join('');
-        }
+    <!-- FEATURES -->
+    <section class="features" id="funcionalidades">
+        <div class="section-label">Funcionalidades</div>
+        <h2 class="section-title">Todo lo que necesita tu gimnasio</h2>
+        <p class="section-sub">Sin hojas de cálculo ni cuadernos. Todo digital y organizado.</p>
 
-        async function agregarSocio() {
-            const nombre = document.getElementById('nombre').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            const msg = document.getElementById('msg');
-            if (!nombre || !email) { msg.className = 'msg err'; msg.textContent = 'Nombre y email son obligatorios.'; return; }
-            const res = await fetch('/api/socios', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, email, telefono })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                msg.className = 'msg ok'; msg.textContent = '✅ Socio agregado correctamente.';
-                document.getElementById('nombre').value = '';
-                document.getElementById('email').value = '';
-                document.getElementById('telefono').value = '';
-                cargarSocios();
-            } else { msg.className = 'msg err'; msg.textContent = '❌ ' + data.error; }
-        }
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Gestión de socios</h3>
+                <p>Registra socios, ve su estado de membresía y exporta la lista en Excel o PDF.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3>Membresías flexibles</h3>
+                <p>Crea planes diarios, mensuales, anuales o personalizados. Actívalos y desactívalos cuando quieras.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Registro de pagos</h3>
+                <p>Cobra en efectivo o transferencia. El sistema calcula el vencimiento automáticamente.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Cierre de caja</h3>
+                <p>Cada cajero tiene su propio cierre. Descarga el reporte en PDF al final del turno.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Reportes y estadísticas</h3>
+                <p>Ve tus ingresos totales, del mes y las membresías más vendidas en una sola pantalla.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📧</div>
+                <h3>Comprobantes por email</h3>
+                <p>Envía un comprobante al correo del socio al registrar su pago, de forma opcional.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👤</div>
+                <h3>Múltiples usuarios</h3>
+                <p>Crea cuentas para tus recepcionistas. El admin controla todo, los usuarios solo registran.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Funciona en celular</h3>
+                <p>Diseño responsive, úsalo desde cualquier celular, tablet o computadora sin instalar nada.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h3>100% en la nube</h3>
+                <p>Tus datos están seguros en servidores de Amazon. No pierdes nada si se daña tu computadora.</p>
+            </div>
+        </div>
+    </section>
 
-        function abrirEditar(id, nombre, email, telefono) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editNombre').value = nombre;
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editTelefono').value = telefono;
-            document.getElementById('modalBg').classList.add('active');
-        }
+    <!-- PRICING -->
+    <section class="pricing" id="precios">
+        <div class="section-label">Precios</div>
+        <h2 class="section-title">Simple y transparente</h2>
+        <p class="section-sub">Sin costos ocultos. Sin contratos. Cancela cuando quieras.</p>
 
-        function cerrarModal() { document.getElementById('modalBg').classList.remove('active'); }
+        <div class="pricing-grid">
+            <div class="pricing-card popular">
+                <div class="popular-badge">⭐ Más popular</div>
+                <h3>Plan Mensual</h3>
+                <div class="pricing-price">S/. 99</div>
+                <div class="pricing-period">por mes · sin contrato</div>
+                <ul class="pricing-features">
+                    <li>Todo del plan gratuito</li>
+                    <li>Usuarios ilimitados</li>
+                    <li>Comprobantes por email</li>
+                    <li>Exportar Excel y PDF</li>
+                    <li>Reportes y estadísticas</li>
+                    <li>Soporte prioritario</li>
+                </ul>
+                <a href="https://wa.me/51XXXXXXXXX?text=Hola, quiero contratar GymControl" class="btn-pricing btn-pricing-solid" target="_blank">Contratar ahora</a>
+            </div>
+        </div>
+    </section>
 
-        async function guardarEdicion() {
-            const id = document.getElementById('editId').value;
-            const nombre = document.getElementById('editNombre').value.trim();
-            const email = document.getElementById('editEmail').value.trim();
-            const telefono = document.getElementById('editTelefono').value.trim();
-            await fetch(`/api/socios/${id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, email, telefono })
-            });
-            cerrarModal(); cargarSocios();
-        }
+    <!-- CTA -->
+    <section class="cta-section" id="contacto">
+        <h2>¿Listo para digitalizar<br>tu <span>gimnasio</span>?</h2>
+        <p>Escríbenos por WhatsApp y te activamos el sistema hoy mismo.</p>
+        <div class="cta-btns">
+            <a href="https://wa.me/51XXXXXXXXX?text=Hola, quiero saber más sobre GymControl" class="btn-whatsapp" target="_blank">
+                💬 Escríbenos por WhatsApp
+            </a>
+            <a href="/registro.html" class="btn-primary">Contáctanos</a>
+        </div>
+    </section>
 
-        async function eliminarSocio(id) {
-            if (!confirm('¿Seguro que deseas eliminar este socio?')) return;
-            await fetch(`/api/socios/${id}`, { method: 'DELETE' });
-            cargarSocios();
-        }
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-logo">💪 Gym<span>Control</span></div>
+        <p>© 2026 GymControl. Todos los derechos reservados.</p>
+        <a href="/login.html">Iniciar sesión</a>
+    </footer>
 
-        verificarSesion();
-        cargarSocios();
-    </script>
 </body>
 </html>
