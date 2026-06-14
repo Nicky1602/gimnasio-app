@@ -17,6 +17,8 @@
         .menu-item:hover, .menu-item.active { background: #e9456015; color: #e94560; border-left: 3px solid #e94560; }
         .menu-item span { font-size: 18px; }
         .sidebar-footer { padding: 16px 24px; border-top: 1px solid #ffffff15; }
+        .cerrar-sesion-mobile { display: flex; align-items: center; justify-content: center; padding: 8px 12px; color: #e94560; font-size: 10px; gap: 4px; cursor: pointer; flex-direction: column; }
+        .cerrar-sesion-mobile span { font-size: 22px; }
         .sidebar-footer button { width: 100%; background: transparent; border: 1px solid #e94560; color: #e94560; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; }
         .sidebar-footer button:hover { background: #e94560; color: white; }
         .main { flex: 1; padding: 32px; }
@@ -44,26 +46,6 @@
         .badge-user { background: #eef4ff; color: #3498db; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .avatar { width: 34px; height: 34px; border-radius: 50%; background: #e9456020; color: #e94560; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
         
-        .cerrar-sesion-mobile { display: none; }
-
-    @media (max-width: 768px) {
-        body { flex-direction: column; }
-        .sidebar { width: 100%; min-height: auto; padding: 12px 0; flex-direction: row; position: fixed; bottom: 0; left: 0; z-index: 50; border-top: 1px solid #ffffff15; }
-        .sidebar-logo { display: none; }
-        .sidebar-menu { padding: 0; display: flex; flex-direction: row; justify-content: space-around; }
-        .menu-item { flex-direction: column; padding: 8px 12px; font-size: 10px; gap: 4px; border-left: none !important; border-top: 3px solid transparent; }
-        .menu-item.active { border-top: 3px solid #e94560; border-left: none; background: #e9456015; }
-        .menu-item span { font-size: 22px; }
-        .sidebar-footer { display: none; }
-        .cerrar-sesion-mobile { display: flex; align-items: center; justify-content: center; padding: 8px 12px; color: #e94560; font-size: 10px; gap: 4px; cursor: pointer; flex-direction: column; }
-        .cerrar-sesion-mobile span { font-size: 22px; }
-
-        .main { padding: 16px; padding-bottom: 80px; }
-        .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
-        .stats { grid-template-columns: 1fr 1fr; }
-        .form-grid { grid-template-columns: 1fr; }
-        table { display: block; overflow-x: auto; white-space: nowrap; }
-    }
     </style>
 </head>
 <body>
