@@ -676,10 +676,6 @@ app.get('/api/caja/cierre-pdf/:id', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 // Aprobar gimnasio (solo tú sabes esta URL)
-app.get('/', (req, res) => {
-    res.sendFile('landing.html', { root: 'public' });
-});
-
 app.post('/api/admin-secret/aprobar-gimnasio', async (req, res) => {
     const { codigo, secret } = req.body;
     if (secret !== 'gymcontrol2026secret') return res.status(403).json({ error: 'No autorizado' });
