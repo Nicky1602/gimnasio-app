@@ -297,8 +297,8 @@ app.get('/api/caja/resumen', auth, async (req, res) => {
         const ultimoCierre = ultimoCierreQ.rows.length > 0 ? ultimoCierreQ.rows[0].ultimo_cierre : null;
 
         // Admin ve todos, usuario solo los suyos
-        const filtroUsuario = rol === 'admin' ? '' : `AND p.cajero=$2`;
-        const params = rol === 'admin' ? [gid] : [gid, usuario];
+        const filtroUsuario = `AND p.cajero=$2`;
+        const params = [gid, usuario];
         const extraParam = ultimoCierre ? [...params, ultimoCierre] : params;
         const extraFiltro = ultimoCierre ? `AND p.created_at > $${params.length + 1}` : '';
 
@@ -328,8 +328,8 @@ app.post('/api/caja/cierre', auth, async (req, res) => {
         const ultimoCierreQ = await pool.query('SELECT ultimo_cierre FROM CierresCajero WHERE usuario=$1 AND gimnasio_id=$2 ORDER BY ultimo_cierre DESC LIMIT 1', [usuario, gid]);
         const ultimoCierre = ultimoCierreQ.rows.length > 0 ? ultimoCierreQ.rows[0].ultimo_cierre : null;
 
-        const filtroUsuario = rol === 'admin' ? '' : `AND cajero=$2`;
-        const params = rol === 'admin' ? [gid] : [gid, usuario];
+        const filtroUsuario = `AND cajero=$2`;
+        const params = [gid, usuario];
         const extraParam = ultimoCierre ? [...params, ultimoCierre] : params;
         const extraFiltro = ultimoCierre ? `AND created_at > $${params.length + 1}` : '';
 
