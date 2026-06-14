@@ -106,7 +106,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const gym = await pool.query('SELECT * FROM Gimnasios WHERE codigo=$1', [codigo]);
         if (gym.rows.length === 0) return res.status(401).json({ error: 'Código de gimnasio incorrecto' });
-        if (gym.rows[0].estado === 'pendiente') return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación. Contáctanos por WhatsApp para activarla.' });
+        if (gym.rows[0].estado === 'pendiente') return res.status(403).json({ error: 'Tu cuenta está pendiente de aprobación.' });
         const r = await pool.query('SELECT * FROM Usuarios WHERE username=$1 AND gimnasio_id=$2', [username, gym.rows[0].id]);
         if (r.rows.length === 0) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
         const valido = await bcrypt.compare(password, r.rows[0].password);
