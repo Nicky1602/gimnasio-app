@@ -562,7 +562,7 @@ app.get('/api/exportar/socios/pdf', auth, async (req, res) => {
         doc.fontSize(10).fillColor('#888').text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, { align: 'center' });
         doc.moveDown();
         r.rows.forEach(s => {
-            doc.fontSize(10).fillColor('#333').text(`Fecha: ${new Date(c.fecha_cierre).toLocaleString('es-ES', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'})}`, { align: 'center' });
+            doc.fontSize(11).fillColor('#333').text(`${s.nombre}   |   ${s.email}   |   ${s.telefono || '-'}   |   ${new Date(s.fecha_registro).toLocaleDateString('es-ES')}`);
             doc.moveDown(0.5);
         });
         doc.end();
@@ -645,7 +645,9 @@ app.get('/api/caja/cierre-pdf/:id', auth, async (req, res) => {
         doc.fontSize(18).fillColor('#e94560').text(g.nombre, { align: 'center' });
         doc.fontSize(11).fillColor('#888').text('Reporte de Cierre de Caja', { align: 'center' });
         doc.moveDown(0.5);
-        doc.fontSize(10).fillColor('#333').text(`Fecha: ${new Date(c.fecha_cierre).toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'})}`, { align: 'center' });
+        const fechaCierre = new Date(c.fecha_cierre);
+        fechaCierre.setHours(fechaCierre.getHours() - 5);
+        doc.fontSize(10).fillColor('#333').text(`Fecha: ${fechaCierre.toLocaleString('es-ES', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'})}`, { align: 'center' });
         doc.fontSize(10).text(`Cajero: ${c.usuario}`, { align: 'center' });
         doc.moveDown();
 
