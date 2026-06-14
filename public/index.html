@@ -120,9 +120,7 @@
             <a href="/reportes.html" class="menu-item"><span>📊</span> Reportes</a>
            
         </div>
-        <div class="cerrar-sesion-mobile" onclick="cerrarSesion()">
-    <span>🚪</span> Salir
-</div>
+        
         <div class="sidebar-footer">
             <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
         </div>
@@ -248,8 +246,11 @@
             const res = await fetch('/api/socios');
             if (!res.ok) { window.location.href = '/login.html'; return; }
             const socios = await res.json();
-            const hoy = new Date().toDateString();
-            const registradosHoy = socios.filter(s => new Date(s.fecha_registro).toDateString() === hoy).length;
+            const hoy = new Date().toISOString().split('T')[0];
+const registradosHoy = socios.filter(s => {
+    const fecha = s.fecha_registro ? s.fecha_registro.split('T')[0] : '';
+    return fecha === hoy;
+}).length;
             document.getElementById('statTotal').textContent = socios.length;
             document.getElementById('statHoy').textContent = registradosHoy;
             document.getElementById('statActivos').textContent = socios.length;
